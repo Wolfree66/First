@@ -51,6 +51,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CancelariaRegistryJournal.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="EditReasonNote.cs" />
     <Compile Include="HTML_MailMessage.cs" />

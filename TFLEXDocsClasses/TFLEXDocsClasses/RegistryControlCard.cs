@@ -13,7 +13,7 @@ namespace TFLEXDocsClasses
 {
     /// <summary>
     /// Для работы с регистрационно-контрольными карточками Канцелярии
-    /// ver 1.2
+    /// ver 1.3
     /// </summary>
     class RegistryControlCard
     {
@@ -59,6 +59,7 @@ namespace TFLEXDocsClasses
         private void AddDocument(ReferenceObject officialNote_ro)
         {
             ReferenceObject.AddLinkedObject(RCC_link_Documents_GUID, officialNote_ro);
+            _Documents.Add(officialNote_ro);
         }
 
         /* private ReferenceObject FindEarlierCreatedRCC(OfficialNote officialNote)
@@ -90,8 +91,69 @@ namespace TFLEXDocsClasses
             return ReferenceObject[RCC_param_AccessLevel_GUID].GetInt16();
         }
 
-        ReferenceObject _Performer;
+        List<ReferenceObject> _Documents;
+        /// <summary>
+        /// Документы
+        /// </summary>
+        public IEnumerable<ReferenceObject> Documents
+        {
+            get
+            {
+                if (_Documents == null) _Documents = ReferenceObject.GetObjects(RCC_link_Documents_GUID);
+                return _Documents;
+            }
+        }
 
+        ReferenceObject _Checker;
+        /// <summary>
+        /// Контролёр
+        /// </summary>
+        public ReferenceObject Checker
+        {
+            get
+            {
+                if (_Checker == null) _Checker = ReferenceObject.GetObject(RCC_link_Checker_GUID);
+                return _Checker;
+            }
+            set
+            {
+                if (value == _Checker) return;
+                _Checker = value;
+                if (_Checker != null)
+                {
+                    ЕстьИзмененияДляСохраненияВБД = true;
+                }
+                ReferenceObject.SetLinkedObject(RCC_link_Checker_GUID, _Checker);
+            }
+        }
+
+        ReferenceObject _Responsible;
+        /// <summary>
+        /// Ответственный
+        /// </summary>
+        public ReferenceObject Responsible
+        {
+            get
+            {
+                if (_Responsible == null) _Responsible = ReferenceObject.GetObject(RCC_link_Responsible_GUID);
+                return _Responsible;
+            }
+            set
+            {
+                if (value == _Responsible) return;
+                _Responsible = value;
+                if (_Responsible != null)
+                {
+                    ЕстьИзмененияДляСохраненияВБД = true;
+                }
+                ReferenceObject.SetLinkedObject(RCC_link_Responsible_GUID, _Responsible);
+            }
+        }
+
+        ReferenceObject _Performer;
+        /// <summary>
+        /// Исполнитель
+        /// </summary>
         public ReferenceObject Performer
         {
             get
@@ -196,6 +258,30 @@ namespace TFLEXDocsClasses
             }
         }
 
+        CancelariaRegistryJournal _RegistryJournal;
+        public CancelariaRegistryJournal RegistryJournal
+        {
+            get
+            {
+                if (_RegistryJournal == null)
+                {
+                    ReferenceObject ro = ReferenceObject.GetObject(RCC_link_RegistryJournal_GUID);
+                    if (ro != null) _RegistryJournal = new CancelariaRegistryJournal(ro);
+                }
+                return _RegistryJournal;
+            }
+            //set
+            //{
+            //    if (value == _RegistryJournal) return;
+            //    if (_RegistryJournal != null)
+            //    {
+            //        ЕстьИзмененияДляСохраненияВБД = true;
+            //    }
+            //    _RegistryJournal = value;
+            //    ReferenceObject.SetLinkedObject(RCC_link_RegistryJournal_GUID, _RegistryJournal);
+            //}
+        }
+
         /// <summary>
         /// Организации Адресаты исходящей корреспонденции
         /// </summary>
@@ -207,8 +293,44 @@ namespace TFLEXDocsClasses
             {
                 result.Add(new Organization(item));
             }
+            if (result.Count == 0)
+            {
+                foreach (var item in this.ReferenceObject.GetObjects(RCC_link_Organizations_GUID_Obsolete))
+                {
+                    result.Add(new Organization(item));
+                }
+            }
 
             return result;
+        }
+
+        string _From;
+        public string From
+        {
+            get
+            {
+                if (_From == null)
+                    _From = this.ReferenceObject[RCC_param_From_GUID].GetString();
+
+                return _From;
+            }
+        }
+
+        List<ReferenceObject> _SignedTo;
+
+        /// <summary>
+        /// список Подписано/Кому
+        /// </summary>
+        public IEnumerable<ReferenceObject> SignedTo
+        {
+            get
+            {
+                if (_SignedTo == null)
+                    _SignedTo = ReferenceObject.GetObjects(RCC_link_SignedTo_GUID);
+                else _SignedTo = new List<ReferenceObject>();
+
+                return _SignedTo;
+            }
         }
 
         /// <summary>
@@ -218,9 +340,11 @@ namespace TFLEXDocsClasses
         public IEnumerable<ReferenceObject> GetUsersForAccess()
         {
             List<ReferenceObject> result = new List<ReferenceObject>();
-            
-            result.AddRange(ReferenceObject.GetObjects(RCC_link_SignedTo_GUID));
-            result.Add(ReferenceObject.GetObject(RCC_link_Performer_GUID));
+
+            result.AddRange(this.SignedTo);
+            ReferenceObject performer = ReferenceObject.GetObject(RCC_link_Performer_GUID);
+            if (performer != null)
+                result.Add(performer);
             result.AddRange(ReferenceObject.GetObjects(RCC_link_ExtraAccess_GUID));
             return result.Distinct().ToList();
         }
@@ -253,11 +377,17 @@ namespace TFLEXDocsClasses
         private static Guid RCC_link_SignedTo_GUID = new Guid("a3746fbd-7bda-4326-8e4b-f6bbefc2ecce"); //связь N:N со Подписал/Кому
         private static Guid RCC_link_Responsible_GUID = new Guid("6a69454d-7803-4cd8-8874-cde190185b7b"); //связь N:1  Ответственный
         private static Guid RCC_link_Performer_GUID = new Guid("17330c2c-589f-4838-b6d1-8a9214666c4e"); //связь N:1  Исполнитель
+        private static Guid RCC_link_Checker_GUID = new Guid("cda6f4f3-0c03-43ad-819c-b89cfca1579f"); //связь N:1  Контроллер
         private static Guid RCC_link_Documents_GUID = new Guid("aab1cd65-fe2d-4fc0-8db2-4ff2b3d215d5"); //связь N:N на любой справочник Документы
-        public static Guid RCC_link_Organizations_GUID = new Guid("4840f02e-19b1-41ff-a063-b98dfa7639da"); //связь N:N со справочником Организации
+        public static Guid RCC_link_Organizations_GUID_Obsolete = new Guid("4840f02e-19b1-41ff-a063-b98dfa7639da"); //связь N:N со справочником Организации
+        public static Guid RCC_link_Organizations_GUID = new Guid("c6afa49d-5c14-4f36-a488-6bce169c1a31"); //связь N:N со справочником Данные организаций
+        public static Guid RCC_link_RegistryJournal_GUID = new Guid("2158039e-d86d-44af-b384-761bc7f233fb"); //связь N:1 со справочником Журнал регистрации
+
         private static Guid RCC_param_AccessLevel_GUID = new Guid("03209f40-7904-4b07-9843-c483050cc1fa"); //параметр "Уровень доступа"
         private static Guid RCC_param_Content_GUID = new Guid("b85553c9-2e2d-4f27-96fa-9ebb8e365747"); //параметр "Содержание"
         private static Guid RCC_param_FromDate_GUID = new Guid("9930335a-8703-47a1-8dc8-49e17a959d20"); //параметр "От"
+        private static Guid RCC_param_From_GUID = new Guid("98ac9043-9e24-4948-b853-a3b93a64cb8e"); //параметр "Откуда поступил"
+
         private static Guid RCC_param_RegistryNumber_GUID = new Guid("ac452c8a-b17a-4753-be3f-195d76480d52"); //параметр "Регистрационный номер"
         private static Guid RCC_param_WhoSigned_GUID = new Guid("87b53d7d-be4e-4eff-9fca-511be18d2498"); //параметр "Подписал"
         private static Guid RCC_param_StorageFolderName_GUID = new Guid("3073a808-4e9a-4a55-97e5-a793f32fdc5f"); //параметр "Папка хранения документа"
