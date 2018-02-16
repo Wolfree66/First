@@ -1,0 +1,81 @@
+﻿<UserControl x:Class="ControlChooseResources.UserControlChooseResources"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ControlChooseResources"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="400" MinHeight="100" MinWidth="200">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="3">
+            <DatePicker Name="dateActual" SelectedDate="{x:Static sys:DateTime.Now}" VerticalAlignment="Center" Margin="5" SelectedDateChanged="dateActual_SelectedDateChanged"/>
+            <StackPanel VerticalAlignment="Center">
+                <CheckBox Visibility="Collapsed" Name="onlyActual" DataContext="{Binding Source={x:Static local:TreeViewNode.Inctance}}" IsChecked="{Binding Path=OnlyActual}" Margin="10,0,0,0" VerticalAlignment="Center" Grid.Column="2" Focusable="False" Content="Только актуальные ресурсы на дату" Checked="onlyActual_Checked" Unchecked="onlyActual_Unchecked"/>
+                <StackPanel Orientation="Horizontal">
+                    <CheckBox Name="hideNotActual" Margin="10,0,0,0" IsChecked="True"  Grid.Column="2" Focusable="False" VerticalAlignment="Center"  Checked="hideNotActual_Checked" Unchecked="hideNotActual_Unchecked">
+                    </CheckBox>
+                    <TextBlock VerticalAlignment="Center" Margin="5,0,5,0">
+                            <Run Text="Скрыть неактуальные ресурсы"/><Run/><LineBreak/> 
+                            <Run Text="на выбранную дату"/><Run/>
+                    </TextBlock>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+        <TreeView x:Name="treeView" Margin="5,5,5,5" TreeViewItem.Expanded="trw_Products_Expanded" Grid.Row="1" Grid.ColumnSpan="3" Loaded="treeView_Loaded" >
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="{x:Type TreeViewItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=IsActual}" Value="True">
+                            <Setter Property="Background" Value="LightGreen" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=IsActual}" Value="False">
+                            <Setter Property="Background" Value="LightYellow" />
+                        </DataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding ElementName=hideNotActual, Path=IsChecked}" Value="false" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility"  Value="Visible" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=IsActual}" Value="False" />
+                                <Condition Binding="{Binding ElementName=hideNotActual, Path=IsChecked}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility"  Value="Collapsed" />
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TreeView.ItemContainerStyle>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" >
+                        <CheckBox Grid.Column="0" Name="checkBox" VerticalAlignment="Center" Focusable="False" IsChecked="{Binding Path=IsChecked}" RenderTransformOrigin="0.5,0.5" Unchecked="checkBox_Unchecked" Checked="checkBox_Checked">
+
+                        </CheckBox>
+                        <ContentPresenter Grid.Column="1" Margin="2,0"
+Content="{Binding NodeName, Mode=Default}" VerticalAlignment="Center"    
+                        />
+                        <!--<ListBox ItemsSource="{Binding Path=Item.LastPlaceForWorkers}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Path=Name}"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>-->
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </Grid>
+</UserControl>
