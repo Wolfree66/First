@@ -1,0 +1,26 @@
+﻿<Window x:Class="WpfApp_DialogueAddSignatories.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp_DialogueAddSignatories"
+        mc:Ignorable="d"
+        Title="Выберите подписантов"  SizeToContent="WidthAndHeight" Loaded="Window_Loaded" >
+
+    <StackPanel Orientation="Vertical" >
+
+        <Label x:Name="label1" Content="Выберите главного конструктора по направлению" HorizontalAlignment="Center"/>
+        <ListBox x:Name="listBox_posts" SelectionMode="Single" SelectionChanged="listBox_posts_SelectionChanged" HorizontalAlignment="Center" />
+        <Label x:Name="label2" Content="Имеется несколько пользователей с данной должностью, выберите нужного" Visibility="Hidden" HorizontalAlignment="Center"/>
+        <ListBox x:Name="listBox_users" SelectionChanged="listBox_users_SelectionChanged" HorizontalAlignment="Center" Margin="0,10,0,0" Visibility="Hidden"/>
+        <Label x:Name="label" Content="Укажите руководителя программы."  HorizontalAlignment="Center"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <ComboBox x:Name="comboBox" SelectionChanged="comboBox_SelectionChanged"  IsReadOnly="True" HorizontalAlignment="Center" IsSynchronizedWithCurrentItem="True" />
+            <Button x:Name="button_clean" Content="Очистить" Click="button_clean_Click"/>
+        </StackPanel>
+        <Button x:Name="button_accept" Content="Принять"  Click="button_accept_Click" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,10,0,0"/>
+
+    </StackPanel>
+
+</Window>
+

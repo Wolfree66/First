@@ -1,0 +1,49 @@
+﻿<Window x:Class="WpfApp_TreeSyncCompositionWork.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:WpfApp_DialogueAddSignatories.ViewModel"
+        Title="Синхронизация состава работ"   SizeToContent="WidthAndHeight" MinWidth="470" Height="auto"  MinHeight="250">
+
+
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal" >
+                <Label Margin="20 10 10 10" x:Name="lable1" Content="Выберите проект" />
+                <ComboBox Margin="10"  MinWidth="300" x:Name="comboBox"  IsReadOnly="True"  IsSynchronizedWithCurrentItem="True" ItemsSource="{Binding Path=DetailingProjects}"/>
+            </StackPanel>
+
+            <Grid>
+                <!-- определение колонок таблиц -->
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+
+                <!-- определение строк таблиц -->
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <CheckBox  Command="{Binding SyncResCommand, UpdateSourceTrigger=PropertyChanged}" IsChecked="False" Grid.Row="0" Grid.Column="0" Margin="20 10 10 10" x:Name="checkBoxSynsRes" Content="Синхронизировать ресурсы"/>
+                <CheckBox  Command="{Binding SyncOnlyPlanResCommand, UpdateSourceTrigger=PropertyChanged}" IsChecked="False" Grid.Row="0" Grid.Column="2" Margin="10" x:Name="checkBoxOnlyPlan" Content="Только плановые ресурсы"/>
+                <Button Grid.Row="1" Grid.ColumnSpan="2" Margin="10"  VerticalAlignment="Center"  x:Name="btnLoad" Content="Загрузить" Command="{Binding BuildTreeCommand}" />
+                <Label Margin="10 10 10 0" Grid.Row="2" Content="Настройка синхронизации" x:Name="lable2" />
+                <TreeView Margin="10 0 10 0" Grid.Row="3" Grid.ColumnSpan="2" x:Name="treeView1">
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Path=Nodes}">
+                            <TextBlock Text="{Binding Name}" />
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+
+                <Button Grid.Row="4" Grid.Column="0"  Margin="10" Content="Синхронизировать"  Command="{Binding SyncCommand}"/>
+                <Button Grid.Row="4" Grid.Column="1" Margin="10"  VerticalAlignment="Center"  x:Name="btnCancel" Content="Отмена" Command="{Binding CloseCommand}"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Window>
+
