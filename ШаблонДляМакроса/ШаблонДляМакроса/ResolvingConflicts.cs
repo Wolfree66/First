@@ -91,11 +91,17 @@ namespace ResolvingConflicts
             ReferenceObject referenceObject = Context.ReferenceObject;
             Conflict conflict = new Conflict(referenceObject);
             ChangeStage(conflict, StageName.AnswerReceived);
-
+            referenceObject.ApplyChanges();
             SendMessageAboutPerformerAnswer(conflict);
-            MessageBox.Show("Ответ отослан заявителю");
+            ЗакрытьДиалогСвойств();
+            //MessageBox.Show("Ответ отослан заявителю");
         }
 
+        public void ЗакрытьДиалогСвойств()
+        {
+            var uiContext = Context as UIMacroContext;
+            uiContext.CloseDialog(true);
+        }
 
 #endif
         public void Событие_ЗавершениеСохраненияОбъекта()
@@ -108,7 +114,7 @@ namespace ResolvingConflicts
 #endif
         }
 
-#endregion
+        #endregion
 
         public void SendMessagesAboutNewConflict()
         {
@@ -294,305 +300,305 @@ namespace ResolvingConflicts
             else MessageBox.Show("Невозможно запустить Процесс, возможно некорректно задан Исполнитель.");
         }
 
-        
-	public void Определение_параметров_исполнителя()
-	{
-		ReferenceObject противоречие = Context.ReferenceObject;
+
+        public void Определение_параметров_исполнителя()
+        {
+            ReferenceObject противоречие = Context.ReferenceObject;
             Conflict conflict = new ResolvingConflicts.Conflict(противоречие);
-		
-		UserReferenceObject исполнитель = conflict.Performer; // Исполнитель-Противоречие
 
-		var должность = ВыполнитьМакрос("6a4385ff-475a-4afb-bb85-965252abebdc", "ОбъектДолжность", исполнитель);
+            UserReferenceObject исполнитель = conflict.Performer; // Исполнитель-Противоречие
 
-		ServerConnection servConnect = (Context as MacroContext).Connection;
-		// получение описания справочника
-		//ReferenceInfo referenceInfo = servConnect.ReferenceCatalog.Find(refUsers);
-		// создание объекта для работы с данными
-		UserReference reference = new UserReference(servConnect);
-		
-		
-		//MessageBox.Show(списокОтделовЗаявителя.Count.ToString());
-		//bool send = false;
-		ReferenceObject departmentObj = null;
-		ReferenceObject groupObj = должность.ParentObject;
-		List <ReferenceObject> departmentManagers = new List <ReferenceObject>();
-		List <ReferenceObject> groupManagers = new List <ReferenceObject>();
-		List <ReferenceObject> departmentViceManagers = new List <ReferenceObject>();
-		List <ReferenceObject> groupViceManagers = new List <ReferenceObject>();
-		
-		var списокОтделов = ВыполнитьМакрос("60d73bc1-bb67-4730-8877-eb6e0f93837a", "GetTheStackPath", groupObj);
+            var должность = ВыполнитьМакрос("6a4385ff-475a-4afb-bb85-965252abebdc", "ОбъектДолжность", исполнитель);
 
-		if(списокОтделов.Count > 1)
-		{
-			for(int i = 0; i<=списокОтделов.Count-2; i++)
-			{
-				Guid objectGuid2 = new Guid(списокОтделов[i].Параметр["GUID"].ToString());
-				ReferenceObject departmentItem = reference.Find(objectGuid2);
-				//MessageBox.Show(authorDepartmentItem.ToString());
-				if((GetTheBosses(departmentItem).Count>0 || GetTheViceBosses(departmentItem).Count>0) && i<списокОтделов.Count-2)
-				{
-					//MessageBox.Show("add manager");
-					groupManagers=GetTheBosses(departmentItem);
-					groupViceManagers=GetTheViceBosses(departmentItem);
-					i=списокОтделов.Count-2;
-					groupObj = departmentItem;
-				}
-				if(i==списокОтделов.Count-2)
-				{
-					objectGuid2 = new Guid(списокОтделов[i].Параметр["GUID"].ToString());
-					departmentItem = reference.Find(objectGuid2);
-					//MessageBox.Show("add depart manager");
-					departmentManagers=GetTheBosses(departmentItem);
-					departmentViceManagers = GetTheViceBosses(departmentItem);
-					departmentObj = departmentItem;
-				}
-			}
-		}
-		противоречие.BeginChanges();
-		//связь с отделом исполнителя
-		if(groupObj != null)
-		{
-			противоречие.ParameterValues[new Guid("21ee9f6a-3b1c-4986-8475-0bc93b699c4e")].Value = groupObj.ToString();
-			if(groupManagers.Count > 0)
-			{
-				foreach (ReferenceObject item in groupManagers)
-				{
-					//MessageBox.Show("add manager " + item.ToString());
-					противоречие.AddLinkedObject(guid_nach_isp, item);
-				}
-			}
-			if(groupViceManagers.Count > 0 )
-			{
-				foreach (ReferenceObject item in groupViceManagers)
-				{
-					//MessageBox.Show("add vice manager " + item.ToString());
-					противоречие.AddLinkedObject(guid_nach_isp, item);
-				}
-			}
-			if(departmentManagers.Count > 0)
-			{
-				foreach (ReferenceObject item in departmentManagers)
-				{
-					//MessageBox.Show("add department manager " + item.ToString());
-					противоречие.AddLinkedObject(guid_ruk_podr_name, item);
-				}
-			}
-			if(departmentViceManagers.Count > 0)
-			{
-				foreach (ReferenceObject item in departmentViceManagers)
-				{
-					//MessageBox.Show("add department vice manager " + item.ToString());
-					противоречие.AddLinkedObject(guid_zam_nach_isp, item);
-				}
-			}
-		}
-		else
-		{
-			противоречие.ParameterValues[new Guid("21ee9f6a-3b1c-4986-8475-0bc93b699c4e")].Value = departmentObj.ToString();
-			if(departmentManagers.Count > 0)
-			{
-				foreach (ReferenceObject item in departmentManagers)
-				{
-					//MessageBox.Show("add department manager " + item.ToString());
-					противоречие.AddLinkedObject(guid_nach_isp, item);
-					противоречие.AddLinkedObject(guid_ruk_podr_name, item);
-				}
-			}
-			if(departmentViceManagers.Count > 0)
-			{
-				foreach (ReferenceObject item in departmentViceManagers)
-				{
-					//MessageBox.Show("add department vice manager " + item.ToString());
-					противоречие.AddLinkedObject(guid_nach_isp, item);
-					противоречие.AddLinkedObject(guid_zam_nach_isp, item);
-				}
-			}
-		}
-		//связь с подразделением исполнителя
-		противоречие.ParameterValues[new Guid("13d91e17-c410-4933-86e9-333b1a0f7e1b")].Value = departmentObj.ToString();
-		//связь с должностью исполнителя
-		противоречие.SetLinkedObject(new Guid("{59921b0b-aec2-4282-a1bd-e9ee9e57a8ab}"), groupObj);
-		
-		
-		противоречие.EndChanges();
-	}
+            ServerConnection servConnect = (Context as MacroContext).Connection;
+            // получение описания справочника
+            //ReferenceInfo referenceInfo = servConnect.ReferenceCatalog.Find(refUsers);
+            // создание объекта для работы с данными
+            UserReference reference = new UserReference(servConnect);
 
-	public void Определение_параметров_заявителя()
-	{
+
+            //MessageBox.Show(списокОтделовЗаявителя.Count.ToString());
+            //bool send = false;
+            ReferenceObject departmentObj = null;
+            ReferenceObject groupObj = должность.ParentObject;
+            List<ReferenceObject> departmentManagers = new List<ReferenceObject>();
+            List<ReferenceObject> groupManagers = new List<ReferenceObject>();
+            List<ReferenceObject> departmentViceManagers = new List<ReferenceObject>();
+            List<ReferenceObject> groupViceManagers = new List<ReferenceObject>();
+
+            var списокОтделов = ВыполнитьМакрос("60d73bc1-bb67-4730-8877-eb6e0f93837a", "GetTheStackPath", groupObj);
+
+            if (списокОтделов.Count > 1)
+            {
+                for (int i = 0; i <= списокОтделов.Count - 2; i++)
+                {
+                    Guid objectGuid2 = new Guid(списокОтделов[i].Параметр["GUID"].ToString());
+                    ReferenceObject departmentItem = reference.Find(objectGuid2);
+                    //MessageBox.Show(authorDepartmentItem.ToString());
+                    if ((GetTheBosses(departmentItem).Count > 0 || GetTheViceBosses(departmentItem).Count > 0) && i < списокОтделов.Count - 2)
+                    {
+                        //MessageBox.Show("add manager");
+                        groupManagers = GetTheBosses(departmentItem);
+                        groupViceManagers = GetTheViceBosses(departmentItem);
+                        i = списокОтделов.Count - 2;
+                        groupObj = departmentItem;
+                    }
+                    if (i == списокОтделов.Count - 2)
+                    {
+                        objectGuid2 = new Guid(списокОтделов[i].Параметр["GUID"].ToString());
+                        departmentItem = reference.Find(objectGuid2);
+                        //MessageBox.Show("add depart manager");
+                        departmentManagers = GetTheBosses(departmentItem);
+                        departmentViceManagers = GetTheViceBosses(departmentItem);
+                        departmentObj = departmentItem;
+                    }
+                }
+            }
+            противоречие.BeginChanges();
+            //связь с отделом исполнителя
+            if (groupObj != null)
+            {
+                противоречие.ParameterValues[new Guid("21ee9f6a-3b1c-4986-8475-0bc93b699c4e")].Value = groupObj.ToString();
+                if (groupManagers.Count > 0)
+                {
+                    foreach (ReferenceObject item in groupManagers)
+                    {
+                        //MessageBox.Show("add manager " + item.ToString());
+                        противоречие.AddLinkedObject(guid_nach_isp, item);
+                    }
+                }
+                if (groupViceManagers.Count > 0)
+                {
+                    foreach (ReferenceObject item in groupViceManagers)
+                    {
+                        //MessageBox.Show("add vice manager " + item.ToString());
+                        противоречие.AddLinkedObject(guid_nach_isp, item);
+                    }
+                }
+                if (departmentManagers.Count > 0)
+                {
+                    foreach (ReferenceObject item in departmentManagers)
+                    {
+                        //MessageBox.Show("add department manager " + item.ToString());
+                        противоречие.AddLinkedObject(guid_ruk_podr_name, item);
+                    }
+                }
+                if (departmentViceManagers.Count > 0)
+                {
+                    foreach (ReferenceObject item in departmentViceManagers)
+                    {
+                        //MessageBox.Show("add department vice manager " + item.ToString());
+                        противоречие.AddLinkedObject(guid_zam_nach_isp, item);
+                    }
+                }
+            }
+            else
+            {
+                противоречие.ParameterValues[new Guid("21ee9f6a-3b1c-4986-8475-0bc93b699c4e")].Value = departmentObj.ToString();
+                if (departmentManagers.Count > 0)
+                {
+                    foreach (ReferenceObject item in departmentManagers)
+                    {
+                        //MessageBox.Show("add department manager " + item.ToString());
+                        противоречие.AddLinkedObject(guid_nach_isp, item);
+                        противоречие.AddLinkedObject(guid_ruk_podr_name, item);
+                    }
+                }
+                if (departmentViceManagers.Count > 0)
+                {
+                    foreach (ReferenceObject item in departmentViceManagers)
+                    {
+                        //MessageBox.Show("add department vice manager " + item.ToString());
+                        противоречие.AddLinkedObject(guid_nach_isp, item);
+                        противоречие.AddLinkedObject(guid_zam_nach_isp, item);
+                    }
+                }
+            }
+            //связь с подразделением исполнителя
+            противоречие.ParameterValues[new Guid("13d91e17-c410-4933-86e9-333b1a0f7e1b")].Value = departmentObj.ToString();
+            //связь с должностью исполнителя
+            противоречие.SetLinkedObject(new Guid("{59921b0b-aec2-4282-a1bd-e9ee9e57a8ab}"), groupObj);
+
+
+            противоречие.EndChanges();
+        }
+
+        public void Определение_параметров_заявителя()
+        {
             User currentUser = ServerGateway.Connection.ClientView.GetUser();
-  //          Объект заявительОбъект = ТекущийПользователь;
-		//RefObj заявитель_RefObj = CurrentUser;
-		var заявительДолжность = ВыполнитьМакрос("6a4385ff-475a-4afb-bb85-965252abebdc", "ОбъектДолжность", currentUser);
-		//ReferenceObject authorPosition = заявительДолжность as ReferenceObject;
-		ReferenceObject противоречие = Context.ReferenceObject;
-		
-		ServerConnection servConnect = (Context as MacroContext).Connection;
+            //          Объект заявительОбъект = ТекущийПользователь;
+            //RefObj заявитель_RefObj = CurrentUser;
+            var заявительДолжность = ВыполнитьМакрос("6a4385ff-475a-4afb-bb85-965252abebdc", "ОбъектДолжность", currentUser);
+            //ReferenceObject authorPosition = заявительДолжность as ReferenceObject;
+            ReferenceObject противоречие = Context.ReferenceObject;
 
-		ReferenceObject authorGroup = заявительДолжность.ParentObject;
-		
-		// установка связи 1:1 или N:1
-		
+            ServerConnection servConnect = (Context as MacroContext).Connection;
 
-		
-		//MessageBox.Show(authorPosition.ToString());
-		var списокОтделовЗаявителя = ВыполнитьМакрос("60d73bc1-bb67-4730-8877-eb6e0f93837a", "GetTheStackPath", authorGroup);
-		//MessageBox.Show(списокОтделовЗаявителя.Count.ToString());
-		//bool send = false;
-		List <ReferenceObject> authorsDepartmentManagers = new List <ReferenceObject>();
-		List <ReferenceObject> authorsGroupManagers = new List <ReferenceObject>();
-		List <ReferenceObject> authorsDepartmentViceManagers = new List <ReferenceObject>();
-		List <ReferenceObject> authorsGroupViceManagers = new List <ReferenceObject>();
-		if(списокОтделовЗаявителя.Count > 1)
-		{
-			for(int i = 0; i<=списокОтделовЗаявителя.Count-2; i++)
-			{
-				//Guid objectGuid2 = new Guid(списокОтделовЗаявителя[i].Параметр["GUID"].ToString());
-				ReferenceObject authorDepartmentItem = (ReferenceObject)списокОтделовЗаявителя[i];
-				//MessageBox.Show(authorDepartmentItem.ToString());
-				if((GetTheBosses(authorDepartmentItem).Count > 0 || GetTheViceBosses(authorDepartmentItem).Count > 0) && i<списокОтделовЗаявителя.Count-2)
-				{
-					//MessageBox.Show("add manager");
-					authorsGroupManagers=GetTheBosses(authorDepartmentItem);
-					authorsGroupViceManagers=GetTheViceBosses(authorDepartmentItem);
-					i=списокОтделовЗаявителя.Count-2;
-				}
-				if(i==списокОтделовЗаявителя.Count-2)
-				{
-					//MessageBox.Show("add depart manager");
-					//objectGuid2 = new Guid(списокОтделовЗаявителя[i].Параметр["GUID"].ToString());
-					authorDepartmentItem = (ReferenceObject)списокОтделовЗаявителя[i];
-					//MessageBox.Show("add depart manager");
-					authorsDepartmentManagers=GetTheBosses(authorDepartmentItem);
-					authorsDepartmentViceManagers = GetTheViceBosses(authorDepartmentItem);
-					//departmentObj = authorDepartmentItem;
-				}
-			}
-		}
-		противоречие.BeginChanges();
-		//связь с подразделением Заявителя
-		противоречие.ParameterValues[new Guid("f3a17147-5316-42a1-ad62-c46e22c6ad46")].Value = списокОтделовЗаявителя[0].ToString();
-		//связь с должностью Заявителя
-		противоречие.SetLinkedObject(new Guid("{136091fc-a834-4488-9ec4-4db4dd61ab71}"), authorGroup);
-		if(authorsGroupManagers.Count > 0)
-		{
-			foreach (ReferenceObject item in authorsGroupManagers)
-			{
-				//MessageBox.Show("add manager " + item.ToString());
-				противоречие.AddLinkedObject(guid_ruk_otd_z_name, item);
-			}
-		}
-		if(authorsGroupViceManagers.Count > 0)
-		{
-			foreach (ReferenceObject item in authorsGroupViceManagers)
-			{
-				//MessageBox.Show("add vice manager " + item.ToString());
-				противоречие.AddLinkedObject(guid_ruk_otd_z_name, item);
-			}
-		}
-		if(authorsGroupViceManagers.Count <= 0 && authorsGroupManagers.Count <= 0)
-		{
-			foreach (ReferenceObject item in authorsDepartmentManagers)
-			{
-				//MessageBox.Show("add manager " + item.ToString());
-				противоречие.AddLinkedObject(guid_ruk_otd_z_name, item);
-			}
-			foreach (ReferenceObject item in authorsDepartmentViceManagers)
-			{
-				//MessageBox.Show("add manager " + item.ToString());
-				противоречие.AddLinkedObject(guid_ruk_otd_z_name, item);
-			}
-		}
-		противоречие.EndChanges();
-		
-	}
+            ReferenceObject authorGroup = заявительДолжность.ParentObject;
 
-	//Возвращает список начальников и замов для группы пользователей
-	public List <ReferenceObject> GetTheBosses(ReferenceObject department)
-	{
-		Guid boss_Link_Child_guid = new Guid ("fdb41549-2adb-40b0-8bb5-d8be4a6a8cd2");
-		List <ReferenceObject> bosses = new List <ReferenceObject>();
-		if (department.GetObject(boss_Link_Child_guid)!=null)//Если для группы задан руководитель
-		{
-			//MessageBox.Show(authorDepartmentItem.ToString()+ " Есть начальник");
-			if(department.GetObject(boss_Link_Child_guid).Class.ToString() == "Сотрудник"
-			   || department.GetObject(boss_Link_Child_guid).Class.ToString() == "Администратор")
-			{
-				//add the authors boss
-				bosses.Add(department.GetObject(boss_Link_Child_guid));
-			}
-			if (department.GetObject(boss_Link_Child_guid).Class.ToString() == "Должность")
-			{
-				foreach (ReferenceObject item in department.GetObject(boss_Link_Child_guid).Children)
-				{
-					//MessageBox.Show(item.ToString() + "; "+item.Class.ToString() + "; Children");
-					if(item.Class.ToString() == "Сотрудник" || item.Class.ToString() == "Администратор")
-					{
-						bosses.Add(item);
-					}
-				}
-			}
-			
-		}
+            // установка связи 1:1 или N:1
 
-		return bosses;
-	}
 
-	//Возвращает список начальников и замов для группы пользователей
-	public List <ReferenceObject> GetTheViceBosses(ReferenceObject department)
-	{
-		Guid viceBoss_Link_guid = new Guid ("a3529004-af33-4582-916c-93c9ac6fb481");
-		List <ReferenceObject> bosses = new List <ReferenceObject>();
 
-		if(department.GetObject(viceBoss_Link_guid)!=null)//заместитель Руководителя
-		{
-			if(department.GetObject(viceBoss_Link_guid).Class.ToString() == "Сотрудник"
-			   || department.GetObject(viceBoss_Link_guid).Class.ToString() == "Администратор")
-			{
-				//add the authors boss
-				bosses.Add(department.GetObject(viceBoss_Link_guid));
-				//if(authorPositionStack[i].GetObject("fdb41549-2adb-40b0-8bb5-d8be4a6a8cd2")!=null)
-			}
-			if (department.GetObject(viceBoss_Link_guid).Class.ToString() == "Должность")
-			{
-				foreach (var item in department.GetObject(viceBoss_Link_guid).Children)
-				{
-					bosses.Add(item);
-				}
-			}
-			
-		}
-		return bosses;
-	}
+            //MessageBox.Show(authorPosition.ToString());
+            var списокОтделовЗаявителя = ВыполнитьМакрос("60d73bc1-bb67-4730-8877-eb6e0f93837a", "GetTheStackPath", authorGroup);
+            //MessageBox.Show(списокОтделовЗаявителя.Count.ToString());
+            //bool send = false;
+            List<ReferenceObject> authorsDepartmentManagers = new List<ReferenceObject>();
+            List<ReferenceObject> authorsGroupManagers = new List<ReferenceObject>();
+            List<ReferenceObject> authorsDepartmentViceManagers = new List<ReferenceObject>();
+            List<ReferenceObject> authorsGroupViceManagers = new List<ReferenceObject>();
+            if (списокОтделовЗаявителя.Count > 1)
+            {
+                for (int i = 0; i <= списокОтделовЗаявителя.Count - 2; i++)
+                {
+                    //Guid objectGuid2 = new Guid(списокОтделовЗаявителя[i].Параметр["GUID"].ToString());
+                    ReferenceObject authorDepartmentItem = (ReferenceObject)списокОтделовЗаявителя[i];
+                    //MessageBox.Show(authorDepartmentItem.ToString());
+                    if ((GetTheBosses(authorDepartmentItem).Count > 0 || GetTheViceBosses(authorDepartmentItem).Count > 0) && i < списокОтделовЗаявителя.Count - 2)
+                    {
+                        //MessageBox.Show("add manager");
+                        authorsGroupManagers = GetTheBosses(authorDepartmentItem);
+                        authorsGroupViceManagers = GetTheViceBosses(authorDepartmentItem);
+                        i = списокОтделовЗаявителя.Count - 2;
+                    }
+                    if (i == списокОтделовЗаявителя.Count - 2)
+                    {
+                        //MessageBox.Show("add depart manager");
+                        //objectGuid2 = new Guid(списокОтделовЗаявителя[i].Параметр["GUID"].ToString());
+                        authorDepartmentItem = (ReferenceObject)списокОтделовЗаявителя[i];
+                        //MessageBox.Show("add depart manager");
+                        authorsDepartmentManagers = GetTheBosses(authorDepartmentItem);
+                        authorsDepartmentViceManagers = GetTheViceBosses(authorDepartmentItem);
+                        //departmentObj = authorDepartmentItem;
+                    }
+                }
+            }
+            противоречие.BeginChanges();
+            //связь с подразделением Заявителя
+            противоречие.ParameterValues[new Guid("f3a17147-5316-42a1-ad62-c46e22c6ad46")].Value = списокОтделовЗаявителя[0].ToString();
+            //связь с должностью Заявителя
+            противоречие.SetLinkedObject(new Guid("{136091fc-a834-4488-9ec4-4db4dd61ab71}"), authorGroup);
+            if (authorsGroupManagers.Count > 0)
+            {
+                foreach (ReferenceObject item in authorsGroupManagers)
+                {
+                    //MessageBox.Show("add manager " + item.ToString());
+                    противоречие.AddLinkedObject(guid_ruk_otd_z_name, item);
+                }
+            }
+            if (authorsGroupViceManagers.Count > 0)
+            {
+                foreach (ReferenceObject item in authorsGroupViceManagers)
+                {
+                    //MessageBox.Show("add vice manager " + item.ToString());
+                    противоречие.AddLinkedObject(guid_ruk_otd_z_name, item);
+                }
+            }
+            if (authorsGroupViceManagers.Count <= 0 && authorsGroupManagers.Count <= 0)
+            {
+                foreach (ReferenceObject item in authorsDepartmentManagers)
+                {
+                    //MessageBox.Show("add manager " + item.ToString());
+                    противоречие.AddLinkedObject(guid_ruk_otd_z_name, item);
+                }
+                foreach (ReferenceObject item in authorsDepartmentViceManagers)
+                {
+                    //MessageBox.Show("add manager " + item.ToString());
+                    противоречие.AddLinkedObject(guid_ruk_otd_z_name, item);
+                }
+            }
+            противоречие.EndChanges();
 
-	public void ИзменениеИсполнителя()
-	{
-		ReferenceObject currentObject = Context.ReferenceObject;
-		var uiContext = Context as UIMacroContext;
-		
-		
-		if(uiContext.ChangedLink.ToString() == "Противоречие - Исполнитель" && currentObject.GetObject(guid_isp_name) != null)
-		{
-			currentObject.BeginChanges();
-			//currentObject.SetLinkedObject(guid_isp_name, null); //обнуляем связь противоречие исполнитель
-			currentObject.SetLinkedObject(performPosition_Link_Guid, null); //обнуляем связь должность исполнителя
-			currentObject.ClearLinks(guid_zam_nach_isp); //обнуляем связь заместитель руководителя подразделения исполнителя
-			currentObject.ClearLinks(guid_ruk_podr_name); //обнуляем связь заместитель руководителя подразделения исполнителя
-			currentObject.EndChanges();
-			//MessageBox.Show("ispolnitel changed");
-			Определение_параметров_исполнителя();
-			//Обновление_Удостоверения_всем();//обновляем значения в Командировочных удостоверениях по данным из заявки
-			//ОбновлениеСлужебныхЗаданийВсем();//обновляем значения в Служебных Заданиях по данным из заявки
-		}
-		/*else
-			{
-			currentObject.BeginChanges();
-			//currentObject.SetLinkedObject(guid_isp_name, null); //обнуляем связь противоречие исполнитель
-			currentObject.SetLinkedObject(performPosition_Link_Guid, null); //обнуляем связь должность исполнителя
-			currentObject.ClearLinks(guid_zam_nach_isp); //обнуляем связь заместитель руководителя подразделения исполнителя
-			currentObject.ClearLinks(guid_ruk_podr_name); //обнуляем связь заместитель руководителя подразделения исполнителя
-			currentObject.EndChanges();
-		}*/
-	}
+        }
+
+        //Возвращает список начальников и замов для группы пользователей
+        public List<ReferenceObject> GetTheBosses(ReferenceObject department)
+        {
+            Guid boss_Link_Child_guid = new Guid("fdb41549-2adb-40b0-8bb5-d8be4a6a8cd2");
+            List<ReferenceObject> bosses = new List<ReferenceObject>();
+            if (department.GetObject(boss_Link_Child_guid) != null)//Если для группы задан руководитель
+            {
+                //MessageBox.Show(authorDepartmentItem.ToString()+ " Есть начальник");
+                if (department.GetObject(boss_Link_Child_guid).Class.ToString() == "Сотрудник"
+                   || department.GetObject(boss_Link_Child_guid).Class.ToString() == "Администратор")
+                {
+                    //add the authors boss
+                    bosses.Add(department.GetObject(boss_Link_Child_guid));
+                }
+                if (department.GetObject(boss_Link_Child_guid).Class.ToString() == "Должность")
+                {
+                    foreach (ReferenceObject item in department.GetObject(boss_Link_Child_guid).Children)
+                    {
+                        //MessageBox.Show(item.ToString() + "; "+item.Class.ToString() + "; Children");
+                        if (item.Class.ToString() == "Сотрудник" || item.Class.ToString() == "Администратор")
+                        {
+                            bosses.Add(item);
+                        }
+                    }
+                }
+
+            }
+
+            return bosses;
+        }
+
+        //Возвращает список начальников и замов для группы пользователей
+        public List<ReferenceObject> GetTheViceBosses(ReferenceObject department)
+        {
+            Guid viceBoss_Link_guid = new Guid("a3529004-af33-4582-916c-93c9ac6fb481");
+            List<ReferenceObject> bosses = new List<ReferenceObject>();
+
+            if (department.GetObject(viceBoss_Link_guid) != null)//заместитель Руководителя
+            {
+                if (department.GetObject(viceBoss_Link_guid).Class.ToString() == "Сотрудник"
+                   || department.GetObject(viceBoss_Link_guid).Class.ToString() == "Администратор")
+                {
+                    //add the authors boss
+                    bosses.Add(department.GetObject(viceBoss_Link_guid));
+                    //if(authorPositionStack[i].GetObject("fdb41549-2adb-40b0-8bb5-d8be4a6a8cd2")!=null)
+                }
+                if (department.GetObject(viceBoss_Link_guid).Class.ToString() == "Должность")
+                {
+                    foreach (var item in department.GetObject(viceBoss_Link_guid).Children)
+                    {
+                        bosses.Add(item);
+                    }
+                }
+
+            }
+            return bosses;
+        }
+
+        public void ИзменениеИсполнителя()
+        {
+            ReferenceObject currentObject = Context.ReferenceObject;
+            var uiContext = Context as UIMacroContext;
+
+
+            if (uiContext.ChangedLink.ToString() == "Противоречие - Исполнитель" && currentObject.GetObject(guid_isp_name) != null)
+            {
+                currentObject.BeginChanges();
+                //currentObject.SetLinkedObject(guid_isp_name, null); //обнуляем связь противоречие исполнитель
+                currentObject.SetLinkedObject(performPosition_Link_Guid, null); //обнуляем связь должность исполнителя
+                currentObject.ClearLinks(guid_zam_nach_isp); //обнуляем связь заместитель руководителя подразделения исполнителя
+                currentObject.ClearLinks(guid_ruk_podr_name); //обнуляем связь заместитель руководителя подразделения исполнителя
+                currentObject.EndChanges();
+                //MessageBox.Show("ispolnitel changed");
+                Определение_параметров_исполнителя();
+                //Обновление_Удостоверения_всем();//обновляем значения в Командировочных удостоверениях по данным из заявки
+                //ОбновлениеСлужебныхЗаданийВсем();//обновляем значения в Служебных Заданиях по данным из заявки
+            }
+            /*else
+                {
+                currentObject.BeginChanges();
+                //currentObject.SetLinkedObject(guid_isp_name, null); //обнуляем связь противоречие исполнитель
+                currentObject.SetLinkedObject(performPosition_Link_Guid, null); //обнуляем связь должность исполнителя
+                currentObject.ClearLinks(guid_zam_nach_isp); //обнуляем связь заместитель руководителя подразделения исполнителя
+                currentObject.ClearLinks(guid_ruk_podr_name); //обнуляем связь заместитель руководителя подразделения исполнителя
+                currentObject.EndChanges();
+            }*/
+        }
 #endif
         private void SendMessageAboutNewConflict(Conflict conflict)
         {
@@ -613,7 +619,7 @@ namespace ResolvingConflicts
 
         private void SendMessageAboutResponse(Conflict conflict)
         {
-            List<UserReferenceObject> mailCopyRecipients = new List<UserReferenceObject> ();
+            List<UserReferenceObject> mailCopyRecipients = new List<UserReferenceObject>();
 
             var declarantManagers = conflict.DeclarantManagers;
             if (declarantManagers.Count() == 0) throw new ArgumentNullException("Не найдены руководители заявителя");
