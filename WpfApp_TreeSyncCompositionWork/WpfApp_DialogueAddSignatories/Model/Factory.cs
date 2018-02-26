@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TFlex.DOCs.Model.Classes;
+﻿using System.Collections.Generic;
 using TFlex.DOCs.Model.References;
-using WpfApp_DialogueAddSignatories.Model;
 
 namespace WpfApp_DialogueAddSignatories.Model
 {

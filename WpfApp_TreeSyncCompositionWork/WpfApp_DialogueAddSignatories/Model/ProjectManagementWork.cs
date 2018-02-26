@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TFlex.DOCs.Model;
 using TFlex.DOCs.Model.References;
-using WpfApp_DialogueAddSignatories.Model;
+
 using TFlexDOCsPM = TFlex.DOCs.References.ProjectManagement;
 
 namespace WpfApp_DialogueAddSignatories.Model

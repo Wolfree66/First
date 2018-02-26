@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WpfApp_DialogueAddSignatories.Model;
+﻿using System.Collections.ObjectModel;
 
 namespace WpfApp_DialogueAddSignatories.Model
 {

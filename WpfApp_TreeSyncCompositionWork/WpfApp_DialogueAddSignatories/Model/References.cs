@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TFlex.DOCs.Model;
 using TFlex.DOCs.Model.Classes;
 using TFlex.DOCs.Model.References;
