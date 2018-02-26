@@ -28,7 +28,7 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
             get
             {
                 if (startObject == null)
-                    startObject = Factory.Create_ProjectManagementWork(startRefObject);
+                    startObject = new ProjectManagementWork(startRefObject);
                 return startObject;
             }
             private set
@@ -45,7 +45,7 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
             this.startRefObject = startRefObject;
 
             if (startObject == null)
-                startObject = Factory.Create_ProjectManagementWork(startRefObject);
+                startObject = new ProjectManagementWork(startRefObject);
 
             if (IsListNullOrEmpty(DetailingProjects))
                 ShowError("Синхронизация состава работа", "Ошибка, выбранная детализация не найдена!");
@@ -71,10 +71,18 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         }
 
         private object selectedDetailingProject;
+
         public object SelectedDetailingProject
         {
-            get { return selectedDetailingProject; }
-            set { selectedDetailingProject = value; OnPropertyChanged("SelectedDetailingProject"); }
+            get { return DetailingProjects.FirstOrDefault(d => d.Name == selectedDetailingProject.ToString()).ReferenceObject; }
+            set
+            {
+                OnPropertyChanged("SelectedDetailingProject");
+                selectedDetailingProject = value;
+
+                //selectedDetailingProject = DetailingProjects.FirstOrDefault(d=>d.Name == value.ToString()).ReferenceObject;
+
+            }
         }
 
         #endregion
@@ -96,11 +104,51 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
                 return _detailingProjects;
             }
         }
-
         ObservableCollection<ProjectManagementWork> LoadDetailingProjects()
         {
             return ProjectManagementWork.AllDetailingProjects(ЗависимостиДетализации);
         }
+
+        ObservableCollection<ProjectTreeItem> BuildTree(Boolean IsSyncRes, Boolean IsSyncOnlyPlanRes)
+        {
+            return Synchronization.SynchronizingСomposition(startRefObject, SelectedDetailingProject as ReferenceObject,
+                IsSyncRes, IsSyncOnlyPlanRes, ref _tree);
+        }
+
+        void Show(ObservableCollection<ProjectTreeItem> nodes, ref StringBuilder strB, ref string space)
+        {
+
+            if (nodes == null) { space += space + " "; return; }
+
+            for (int i = 0; i < nodes.Count; i++)
+            {
+
+                var n = nodes[i];
+
+                strB.AppendLine(space + " " + n.ReferenceObject.ToString() + " " + n.IsForAdd);
+
+                Show(n.Children, ref strB, ref space);
+            }
+
+        }
+
+        /// <summary>
+        /// Дерево 
+        /// </summary>
+
+        ObservableCollection<ProjectTreeItem> _tree;
+        /// <summary>
+        /// Список проектов (детализаций) выбронного элемента проекта
+        /// </summary>
+        public ObservableCollection<ProjectTreeItem> Tree
+        {
+            get
+            {
+                return _tree = BuildTree(IsSyncRes, IsSyncOnlyPlanRes);
+            }
+        }
+
+
 
         private static List<ReferenceObject> _зависимостиДетализации;
 
@@ -132,24 +180,7 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         }
 
 
-        public object Show { get; internal set; }
 
-        /// <summary>
-        /// Дерево 
-        /// </summary>
-
-        ObservableCollection<ProjectTreeItem> _tree = new ObservableCollection<ProjectTreeItem>();
-        /// <summary>
-        /// Список проектов (детализаций) выбронного элемента проекта
-        /// </summary>
-        public ObservableCollection<ProjectTreeItem> Tree
-        {
-            get
-            {
-
-                return _tree;
-            }
-        }
 
         //ProjectTreeItem tree;
         //public ProjectTreeItem Tree
@@ -201,46 +232,6 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
             else
                 return true;
         }
-
-        RelayCommand _selectedDCommand;
-        /// <summary>
-        /// Синхронизировать только плановые ресурсы
-        /// </summary>
-        public ICommand SelectedDCommand
-        {
-            get
-            {
-                if (_selectedDCommand == null)
-                    _selectedDCommand = new RelayCommand(ExecuteSelectedDCommand, CanExecuteSelectedDCommand);
-                return _selectedDCommand;
-            }
-        }
-
-        /// <summary>
-        /// Смена флага на противоположное значение
-        /// </summary>
-        /// <param name="parameter"></param>
-        public void ExecuteSelectedDCommand(object parameter)
-        {
-            System.Windows.Forms.MessageBox.Show(selectedDetailingProject.ToString());
-        }
-
-        /// <summary>
-        /// Проверка на возможность смены флага
-        /// </summary>
-        /// <param name="parameter"></param>
-        /// <returns></returns>
-        public bool CanExecuteSelectedDCommand(object parameter)
-        {
-            if (!IsSyncRes || IsListNullOrEmpty(_detailingProjects))
-            {
-                IsSyncOnlyPlanRes = false;
-                return false;
-            }
-            else
-                return true;
-        }
-
 
         RelayCommand _syncOnlyPlanResCommand;
         /// <summary>
@@ -368,7 +359,12 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         /// <param name="parameter"></param>
         public void ExecuteBuildTreeCommand(object parameter)
         {
-            Synchronization.SynchronizingСomposition(startRefObject, SelectedDetailingProject as ReferenceObject, ref _tree);
+
+            var nodes = Tree;
+            StringBuilder strB = new StringBuilder();
+            string space = string.Empty;
+            Show(nodes, ref strB, ref space);
+            System.Windows.Forms.MessageBox.Show(strB.ToString());
             //Clients.Add(CurrentClient);
             //CurrentClient = null;
         }
@@ -395,7 +391,11 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         /// </summary>
         protected override void OnDispose()
         {
-            //this.Clients.Clear();
+            startRefObject = null;
+            StartObject = null;
+            SelectedDetailingProject = null;
+            _detailingProjects = null;
+            _tree = null;
         }
     }
 }

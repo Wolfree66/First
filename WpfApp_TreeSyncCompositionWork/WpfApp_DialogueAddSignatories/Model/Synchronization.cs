@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows.Forms;
 using TFlex.DOCs.Model;
 using TFlex.DOCs.Model.Classes;
 using TFlex.DOCs.Model.References;
@@ -169,14 +170,22 @@ namespace WpfApp_DialogueAddSignatories.Model
             return GetDependenciesObjects(returnOnlyMasterWorks, work.Guid.ToString());
         }
 
-        public static void SynchronizingСomposition(ReferenceObject currentObject, ReferenceObject выбраннаяДетализация, ref ObservableCollection<ProjectTreeItem> tree)
+        public static ObservableCollection<ProjectTreeItem> SynchronizingСomposition(ReferenceObject currentObject, ReferenceObject выбраннаяДетализация, bool IsCopyRes, bool IsCopyPlanRes, ref ObservableCollection<ProjectTreeItem> tree)
         {
+            if (tree == null)
+                tree = new ObservableCollection<ProjectTreeItem>();
+
             BoxParam ParamBox = new BoxParam();
+
 
             ParamBox.currentObject = new ProjectManagementWork(currentObject);
             ParamBox.Detailing = new Model.ProjectManagementWork(выбраннаяДетализация);
+            ParamBox.IsCopyPlan = IsCopyPlanRes;
+            ParamBox.IsCopyRes = IsCopyRes;
 
             SynchronizingСomposition(ParamBox, ref tree, false);
+
+            return tree;
         }
 
 
@@ -186,6 +195,7 @@ namespace WpfApp_DialogueAddSignatories.Model
 
             ProjectManagementWork PMObject = ParamBox.currentObject;
             ProjectManagementWork Детализация = ParamBox.Detailing;
+
             tree.Add(new ProjectTreeItem(Детализация.ReferenceObject, IsForAdd));
 
             //string text = "Пожалуйста подождите...";
@@ -236,9 +246,8 @@ namespace WpfApp_DialogueAddSignatories.Model
                         newPE.RecalcResourcesWorkLoad();
 
                         newPE.EndChanges();
-                        // amountCreate++;
+                        //amountCreate++;
                         IsForAdd = true;
-                        // Node<ProjectElement> NodeChildForAdd = tree.AddChild(tree.Root, childDetail, true);
 
                         // text = string.Format("Добавление элемента проекта {0}", newPE.ToString());
                         // WaitingHelper.SetText(text);

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows.Forms;
 using TFlex.DOCs.Model;
 using TFlex.DOCs.Model.References;
 
@@ -30,8 +31,9 @@ namespace WpfApp_DialogueAddSignatories.Model
 
         public ProjectManagementWork(ReferenceObject work)
         {
-            ReferenceObject = work;
-            this.Guid = work.SystemFields.Guid;
+            if (work == null) MessageBox.Show("!!!");
+            ReferenceObject = FindWork(work.SystemFields.Guid); 
+            this.Guid = ReferenceObject.SystemFields.Guid;
         }
 
 

@@ -3,8 +3,18 @@ using TFlex.DOCs.Model.References;
 
 namespace WpfApp_DialogueAddSignatories.Model
 {
-    public class ProjectTreeItem : ITreeNode
+    public class ProjectTreeItem 
     {
+
+        public ReferenceObject ReferenceObject;
+        private string name;
+
+        public string Name
+        {
+            get { return ReferenceObject.ToString(); }
+            set { name = value; }
+        }
+
 
         public ProjectTreeItem()
         {
@@ -18,10 +28,9 @@ namespace WpfApp_DialogueAddSignatories.Model
 
         public bool IsForAdd { get; set; }
 
-        public ReferenceObject ReferenceObject;
 
-        ITreeNode _Parent;
-        public ITreeNode Parent
+        ProjectTreeItem _Parent;
+        public ProjectTreeItem Parent
         {
             get
             {
@@ -34,17 +43,17 @@ namespace WpfApp_DialogueAddSignatories.Model
             }
         }
 
-        ObservableCollection<ITreeNode> _Children;
-        public ObservableCollection<ITreeNode> Children
+        ObservableCollection<ProjectTreeItem> _Children;
+        public ObservableCollection<ProjectTreeItem> Children
         {
             get
             {
                 if (_Children == null)
                 {
-                    ObservableCollection<ITreeNode> temp = new ObservableCollection<ITreeNode>();
+                    ObservableCollection<ProjectTreeItem> temp = new ObservableCollection<ProjectTreeItem>();
                     foreach (var child in this.ReferenceObject.Children)
                     {
-                        ITreeNode node = Factory.CreateProjectTreeItem(child);
+                        ProjectTreeItem node = Factory.CreateProjectTreeItem(child);
                         if (node != null) temp.Add(node);
                     }
                     _Children = temp;
@@ -53,7 +62,7 @@ namespace WpfApp_DialogueAddSignatories.Model
             }
             set
             {
-               
+
             }
         }
 

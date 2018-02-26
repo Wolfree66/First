@@ -39,7 +39,7 @@ namespace WpfApp_DialogueAddSignatories.Model
             return currentVersion;
         }
 
-        internal static ITreeNode CreateProjectTreeItem(ReferenceObject referenceObject)
+        internal static ProjectTreeItem CreateProjectTreeItem(ReferenceObject referenceObject)
         {
             //если это работа то создаём работу
             if (referenceObject.Class.IsInherit(References.ProjectManagementReference.Classes.Find(ProjectManagementWork.PM_class_ProjectElement_Guid))) return Create_ProjectManagementWork(referenceObject);
