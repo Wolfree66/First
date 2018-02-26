@@ -96,14 +96,44 @@ namespace WpfApp_DialogueAddSignatories.Model
         public double LabourHours
         { get; private set; }
 
-        private static readonly Guid param_UsResStartDate_Guid = new Guid("57695721-084c-48bf-8c39-667d27ee1aaf");     //Guid параметра "Начало"
-        private static readonly Guid param_UsResEndDate_Guid = new Guid("1680be8c-8527-4243-85ab-b3ae6dc38140");       //Guid параметра "Окончание"
-        private static readonly Guid param_NumHours_Guid = new Guid("28076069-6b20-4b66-97ab-a03e2b14f655");           //Guid параметра "Количество"
-        private static readonly Guid param_NumIsFixed_Guid = new Guid("98b3cfd1-914e-402a-a05c-571d15ceab6a");         //Guid параметра "Фиксировать количество"
-        private static readonly Guid param_PlanningSpace_Guid = new Guid("01b7d086-1483-42ee-bc14-588dbabd7d50");   //Guid параметра "Пространство планирования"
-        private static readonly Guid param_IsPlanned_Guid = new Guid("4227e515-66a4-43ae-9418-346854748986");         //Guid параметра "Фактическое значение
-        private static readonly Guid link_ResourceGroup_Guid = new Guid("35edec01-6119-44c5-a062-1859eeac38ab");       //Guid связи N:1 "Группа"
-        private static readonly Guid link_Resource_Guid = new Guid("7f882c52-bfae-4a93-a7a7-9f548215898f");            //Guid связи n:1 "Ресурс"
-        private static readonly Guid link_UsedResources_GUID = new Guid("1a22ee46-5438-4caa-8b75-8a8a37b74b7e");       //Guid связи 1:n "Ресурсы" (используемы ресурсы в работе)
+        //Guid параметра "Начало"
+        public static readonly Guid param_UsResStartDate_Guid = new Guid("57695721-084c-48bf-8c39-667d27ee1aaf");
+        //Guid параметра "Окончание"     
+        public static readonly Guid param_UsResEndDate_Guid = new Guid("1680be8c-8527-4243-85ab-b3ae6dc38140");
+        //Guid параметра "Количество"       
+        public static readonly Guid param_NumHours_Guid = new Guid("28076069-6b20-4b66-97ab-a03e2b14f655");
+        //Guid параметра "Фиксировать количество"           
+        public static readonly Guid param_NumIsFixed_Guid = new Guid("98b3cfd1-914e-402a-a05c-571d15ceab6a");
+        //Guid параметра "Пространство планирования"         
+        public static readonly Guid param_PlanningSpace_Guid = new Guid("01b7d086-1483-42ee-bc14-588dbabd7d50");
+        //Guid параметра "Фактическое значение   
+        public static readonly Guid param_IsPlanned_Guid = new Guid("4227e515-66a4-43ae-9418-346854748986");
+        //Guid связи N:1 "Группа"         
+        public static readonly Guid link_ResourceGroup_Guid = new Guid("35edec01-6119-44c5-a062-1859eeac38ab");
+        //Guid связи n:1 "Ресурс"       
+        public static readonly Guid link_Resource_Guid = new Guid("7f882c52-bfae-4a93-a7a7-9f548215898f");
+        //Guid связи 1:n "Ресурсы" (используемы ресурсы в работе)            
+        public static readonly Guid link_UsedResources_GUID = new Guid("1a22ee46-5438-4caa-8b75-8a8a37b74b7e");
+
+        /// <summary>
+        /// Получить GUID пространства планирования используемого ресурса
+        /// </summary>
+        /// <param name="usedResource">Используемый ресурс</param>
+        /// <returns></returns>
+        static public Guid GetPlanningSpaceUsedResource(ReferenceObject usedResource)
+        {
+            return usedResource[param_PlanningSpace_Guid].GetGuid();
+        }
+
+        /// <summary>
+        /// Получить связанный ресурс
+        /// </summary>
+        /// <param usedResource=""></param>
+        /// <returns></returns>
+        static public ReferenceObject GetResourcesLink(ReferenceObject usedResource)
+        {
+            return usedResource.GetObject(link_Resource_Guid);
+        }
+
     }
 }

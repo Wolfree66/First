@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using TFlex.DOCs.Model;
 using TFlex.DOCs.Model.Classes;
 using TFlex.DOCs.Model.References;
 using TFlex.DOCs.Model.Search;
+using TFlex.DOCs.References.ProjectManagement;
 
 namespace WpfApp_DialogueAddSignatories.Model
 {
@@ -14,7 +16,7 @@ namespace WpfApp_DialogueAddSignatories.Model
     /// </summary>
     public class Synchronization
     {
-   
+
 
         /// <summary>
         /// Возвращает список синхронизированных работ из указанного пространства планирования
@@ -156,11 +158,106 @@ namespace WpfApp_DialogueAddSignatories.Model
 
         }
 
-
+        /// <summary>
+        /// Получить список зависимостей типа синхранизация
+        /// </summary>
+        /// <param name="returnOnlyMasterWorks">true - список зависимостей (укрупнение)</param>
+        /// <param name="work"></param>
+        /// <returns></returns>
         public static List<ReferenceObject> GetDependenciesObjects(bool? returnOnlyMasterWorks, ProjectManagementWork work)
         {
             return GetDependenciesObjects(returnOnlyMasterWorks, work.Guid.ToString());
         }
+
+        public static void SynchronizingСomposition(ReferenceObject currentObject, ReferenceObject выбраннаяДетализация, ref ObservableCollection<ProjectTreeItem> tree)
+        {
+            BoxParam ParamBox = new BoxParam();
+
+            ParamBox.currentObject = new ProjectManagementWork(currentObject);
+            ParamBox.Detailing = new Model.ProjectManagementWork(выбраннаяДетализация);
+
+            SynchronizingСomposition(ParamBox, ref tree, false);
+        }
+
+
+        static void SynchronizingСomposition(object objBox, ref ObservableCollection<ProjectTreeItem> tree, Boolean IsForAdd)
+        {
+            BoxParam ParamBox = (BoxParam)objBox;
+
+            ProjectManagementWork PMObject = ParamBox.currentObject;
+            ProjectManagementWork Детализация = ParamBox.Detailing;
+            tree.Add(new ProjectTreeItem(Детализация.ReferenceObject, IsForAdd));
+
+            //string text = "Пожалуйста подождите...";
+
+            // WaitingHelper.SetText(text);
+            List<ProjectManagementWork> УкрупненияДетализации = Synchronization.GetSynchronizedWorksFromSpace(Детализация, null, false);
+
+            ProjectManagementWork УкрупнениеДетализации = УкрупненияДетализации.FirstOrDefault(pe => pe.Project == PMObject.Project);
+
+            #region цикл дочерних работ детализации
+            foreach (var childDetail in Детализация.Children.OfType<ProjectManagementWork>())
+            {
+                IsForAdd = false;
+                ParamBox.Detailing = childDetail;
+
+                List<ProjectManagementWork> Укрупнения = Synchronization.GetSynchronizedWorksFromSpace(childDetail, null, false);
+                ProjectElement newPE = null;
+
+                if (Укрупнения == null || Укрупнения.Count() == 0)
+                {
+                    //Для каждой дочерней работы проверяем наличие синхронизации с планом РП
+                    //если есть синхронизация с планом РП, то переходим к следующей дочерней работе
+                    if (!Укрупнения.Any(pe => pe.Project == PMObject.Project))
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+
+                    /* Если синхронизация отсутствует, то создаём новую работу в плане РП 
+                       в синхронизированной с Текущей и устанавливаем синхронизацию с дочерней из плана детализации.
+                   */
+
+                    ClassObject TypePE = childDetail.ReferenceObject.Class;
+
+                    List<Guid> GuidsLinks = new List<Guid>() { new Guid("063df6fa-3889-4300-8c7a-3ce8408a931a"),
+                new Guid("68989495-719e-4bf3-ba7c-d244194890d5"), new Guid("751e602a-3542-4482-af40-ad78f90557ad"),
+                new Guid("df3401e2-7dc6-4541-8033-0188a8c4d4bf"),new Guid("58d2e256-5902-4ed4-a594-cf2ba7bd4770")
+                ,new Guid("0e1f8984-5ebe-4779-a9cd-55aa9c984745") ,new Guid("79b01004-3c10-465a-a6fb-fe2aa95ae5b8")
+                ,new Guid("339ffc33-55b2-490f-b608-a910c1f59f51")};
+
+                    newPE = childDetail.ReferenceObject.CreateCopy(TypePE, УкрупнениеДетализации.ReferenceObject, GuidsLinks, false)
+                        as ProjectElement;
+
+                    if (newPE != null)
+                    {
+                        newPE.RecalcResourcesWorkLoad();
+
+                        newPE.EndChanges();
+                        // amountCreate++;
+                        IsForAdd = true;
+                        // Node<ProjectElement> NodeChildForAdd = tree.AddChild(tree.Root, childDetail, true);
+
+                        // text = string.Format("Добавление элемента проекта {0}", newPE.ToString());
+                        // WaitingHelper.SetText(text);
+
+                        if (ParamBox.IsCopyRes)
+                            ProjectManagementWork.СкопироватьИспользуемыеРесурсы_изЭлементаПроекта_вЭлементПроекта
+        (newPE, childDetail.ReferenceObject, newPE.Project[ProjectManagementWork.PM_param_PlanningSpace_GUID].GetGuid(), onlyPlanningRes: ParamBox.IsCopyPlan);
+
+                        SyncronizeWorks(new ProjectManagementWork(newPE), childDetail);
+                    }
+                }
+
+
+                SynchronizingСomposition(ParamBox, ref tree, IsForAdd);
+
+            }
+            #endregion
+        }
+
         public static List<ReferenceObject> GetDependenciesObjects(bool? returnOnlyMasterWorks, string guidStringForSearch)
         {
             Filter filter = new Filter(ProjectDependenciesReferenceInfo);

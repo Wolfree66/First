@@ -21,34 +21,6 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
 
         private ReferenceObject startRefObject;
 
-        public MainWindowViewModel(ReferenceObject startRefObject)
-        {
-            this.startRefObject = startRefObject;
-
-            if (startObject == null)
-                startObject = Factory.Create_ProjectManagementWork(startRefObject);
-
-            if (IsListNullOrEmpty(DetailingProjects))
-                ShowError("Синхронизация состава работа", "Ошибка, выбранная детализация не найдена!");
-
-            return;
-        }
-
-
-        public bool IsSyncRes
-        {
-            get { return ControlDialog.IsSyncRes; }
-            set { OnPropertyChanged("IsSyncRes"); ControlDialog.IsSyncRes = value; }
-        }
-
-
-
-        public bool IsSyncOnlyPlanRes
-        {
-            get { return ControlDialog.IsSyncOnlyPlanRes; }
-            set { OnPropertyChanged("IsSyncOnlyPlanRes"); ControlDialog.IsSyncOnlyPlanRes = value; }
-        }
-
         private static ProjectManagementWork startObject;
 
         public ProjectManagementWork StartObject
@@ -65,7 +37,53 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
                 OnPropertyChanged("StartObject");
             }
         }
+
+
+
+        public MainWindowViewModel(ReferenceObject startRefObject)
+        {
+            this.startRefObject = startRefObject;
+
+            if (startObject == null)
+                startObject = Factory.Create_ProjectManagementWork(startRefObject);
+
+            if (IsListNullOrEmpty(DetailingProjects))
+                ShowError("Синхронизация состава работа", "Ошибка, выбранная детализация не найдена!");
+
+            return;
+        }
+
+        #region  
+
+        private static bool _IsSyncRes = false;
+
+        public bool IsSyncRes
+        {
+            get { return _IsSyncRes; }
+            set { OnPropertyChanged("IsSyncRes"); _IsSyncRes = value; }
+        }
+        private static bool _IsSyncOnlyPlanRes = false;
+
+        public bool IsSyncOnlyPlanRes
+        {
+            get { return _IsSyncOnlyPlanRes; }
+            set { OnPropertyChanged("IsSyncOnlyPlanRes"); _IsSyncOnlyPlanRes = value; }
+        }
+
+        private object selectedDetailingProject;
+        public object SelectedDetailingProject
+        {
+            get { return selectedDetailingProject; }
+            set { selectedDetailingProject = value; OnPropertyChanged("SelectedDetailingProject"); }
+        }
+
+        #endregion
+
+
         ObservableCollection<ProjectManagementWork> _detailingProjects;
+        /// <summary>
+        /// Список проектов (детализаций) выбронного элемента проекта
+        /// </summary>
         public ObservableCollection<ProjectManagementWork> DetailingProjects
         {
             get
@@ -84,19 +102,18 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
             return ProjectManagementWork.AllDetailingProjects(ЗависимостиДетализации);
         }
 
-
-        private static List<ReferenceObject> зависимостиДетализации;
+        private static List<ReferenceObject> _зависимостиДетализации;
 
         public List<ReferenceObject> ЗависимостиДетализации
         {
             get
             {
-                if (IsListNullOrEmpty(зависимостиДетализации))
+                if (IsListNullOrEmpty(_зависимостиДетализации))
                 {
-                    зависимостиДетализации = new List<ReferenceObject>();
-                    зависимостиДетализации = Synchronization.GetDependenciesObjects(false, StartObject);
+                    _зависимостиДетализации = new List<ReferenceObject>();
+                    _зависимостиДетализации = Synchronization.GetDependenciesObjects(false, StartObject);
                 }
-                return зависимостиДетализации;
+                return _зависимостиДетализации;
             }
         }
 
@@ -106,9 +123,8 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
                 MessageBoxDefaultButton.Button1, System.Windows.Forms.MessageBoxOptions.ServiceNotification);
         }
 
-        bool IsListNullOrEmpty<T>(IEnumerable<T> list)
+        public static bool IsListNullOrEmpty<T>(IEnumerable<T> list)
         {
-
             if (list == null || list.Count() == 0)
                 return true;
 
@@ -117,6 +133,23 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
 
 
         public object Show { get; internal set; }
+
+        /// <summary>
+        /// Дерево 
+        /// </summary>
+
+        ObservableCollection<ProjectTreeItem> _tree = new ObservableCollection<ProjectTreeItem>();
+        /// <summary>
+        /// Список проектов (детализаций) выбронного элемента проекта
+        /// </summary>
+        public ObservableCollection<ProjectTreeItem> Tree
+        {
+            get
+            {
+
+                return _tree;
+            }
+        }
 
         //ProjectTreeItem tree;
         //public ProjectTreeItem Tree
@@ -129,8 +162,14 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         //    }
         //}
 
+        #region Commands
+
+
 
         RelayCommand _syncResCommand;
+        /// <summary>
+        /// Синхронизировать ресурсы
+        /// </summary>
         public ICommand SyncResCommand
         {
             get
@@ -142,7 +181,7 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         }
 
         /// <summary>
-        /// Добавление в список
+        /// Смена флага на противоположное значение
         /// </summary>
         /// <param name="parameter"></param>
         public void ExecuteSyncResCommand(object parameter)
@@ -151,7 +190,7 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         }
 
         /// <summary>
-        /// Проверка перед добавлением
+        /// Проверка на возможность смены флага
         /// </summary>
         /// <param name="parameter"></param>
         /// <returns></returns>
@@ -163,8 +202,50 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
                 return true;
         }
 
+        RelayCommand _selectedDCommand;
+        /// <summary>
+        /// Синхронизировать только плановые ресурсы
+        /// </summary>
+        public ICommand SelectedDCommand
+        {
+            get
+            {
+                if (_selectedDCommand == null)
+                    _selectedDCommand = new RelayCommand(ExecuteSelectedDCommand, CanExecuteSelectedDCommand);
+                return _selectedDCommand;
+            }
+        }
+
+        /// <summary>
+        /// Смена флага на противоположное значение
+        /// </summary>
+        /// <param name="parameter"></param>
+        public void ExecuteSelectedDCommand(object parameter)
+        {
+            System.Windows.Forms.MessageBox.Show(selectedDetailingProject.ToString());
+        }
+
+        /// <summary>
+        /// Проверка на возможность смены флага
+        /// </summary>
+        /// <param name="parameter"></param>
+        /// <returns></returns>
+        public bool CanExecuteSelectedDCommand(object parameter)
+        {
+            if (!IsSyncRes || IsListNullOrEmpty(_detailingProjects))
+            {
+                IsSyncOnlyPlanRes = false;
+                return false;
+            }
+            else
+                return true;
+        }
+
 
         RelayCommand _syncOnlyPlanResCommand;
+        /// <summary>
+        /// Синхронизировать только плановые ресурсы
+        /// </summary>
         public ICommand SyncOnlyPlanResCommand
         {
             get
@@ -176,20 +257,16 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         }
 
         /// <summary>
-        /// Добавление в список
+        /// Смена флага на противоположное значение
         /// </summary>
         /// <param name="parameter"></param>
         public void ExecuteSyncOnlyPlanResCommand(object parameter)
         {
-
             IsSyncOnlyPlanRes = !IsSyncOnlyPlanRes;
-
-            //Clients.Add(CurrentClient);
-            //CurrentClient = null;
         }
 
         /// <summary>
-        /// Проверка перед добавлением
+        /// Проверка на возможность смены флага
         /// </summary>
         /// <param name="parameter"></param>
         /// <returns></returns>
@@ -204,12 +281,17 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
                 return true;
         }
 
-
+        #region Кнопка Отмена
         public Action CloseAction { get; set; }
+
         public bool CanClose { get; set; } = true;
+
 
         private RelayCommand _closeCommand;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public ICommand CloseCommand
         {
             get
@@ -228,10 +310,12 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
             CloseAction(); // Invoke the Action previously defined by the View
         }
 
-
-
+        #endregion
 
         RelayCommand _syncCommand;
+        /// <summary>
+        /// Команда кнопки Синхронизировать
+        /// </summary>
         public ICommand SyncCommand
         {
             get
@@ -244,17 +328,16 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
 
 
         /// <summary>
-        /// Добавление в список
+        /// Действие по нажатию кнопки
         /// </summary>
         /// <param name="parameter"></param>
         public void ExecuteSyncCommand(object parameter)
         {
-            //Clients.Add(CurrentClient);
-            //CurrentClient = null;
+
         }
 
         /// <summary>
-        /// Добавление в список
+        /// Условия нажатия кнопки
         /// </summary>
         /// <param name="parameter"></param>
         public bool CanExecuteSyncCommand(object parameter)
@@ -266,6 +349,9 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
         }
 
         RelayCommand _buildTreeCommand;
+        /// <summary>
+        /// команда кнопки "Загрузить"
+        /// </summary>
         public ICommand BuildTreeCommand
         {
             get
@@ -276,21 +362,19 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
             }
         }
 
-
-
         /// <summary>
-        /// Добавление в список
+        /// Действие кнопки "Загрузить"
         /// </summary>
         /// <param name="parameter"></param>
         public void ExecuteBuildTreeCommand(object parameter)
         {
-
+            Synchronization.SynchronizingСomposition(startRefObject, SelectedDetailingProject as ReferenceObject, ref _tree);
             //Clients.Add(CurrentClient);
             //CurrentClient = null;
         }
 
         /// <summary>
-        /// Проверка перед добавлением
+        /// Условия выполнения кнопки "Загрузить"
         /// </summary>
         /// <param name="parameter"></param>
         /// <returns></returns>
@@ -301,10 +385,10 @@ namespace WpfApp_DialogueAddSignatories.ViewModel
                 return false;
             else
                 return true;
-         
+
         }
 
-
+        #endregion
 
         /// <summary>
         /// Очистка коллекции

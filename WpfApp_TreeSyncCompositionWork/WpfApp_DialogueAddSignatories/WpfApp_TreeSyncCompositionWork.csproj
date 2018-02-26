@@ -87,7 +87,6 @@
     <Compile Include="Model\ProjectManagementWork.cs" />
     <Compile Include="Model\ProjectTreeItem.cs" />
     <Compile Include="Model\References.cs" />
-    <Compile Include="Model\ControlDialog.cs" />
     <Compile Include="Model\Synchronization.cs" />
     <Compile Include="Model\UsedResource.cs" />
     <Compile Include="ViewModel\MainWindowViewModel.cs" />

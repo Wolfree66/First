@@ -6,12 +6,15 @@ namespace WpfApp_DialogueAddSignatories.Model
     public class ProjectTreeItem : ITreeNode
     {
 
+        public ProjectTreeItem()
+        {
 
-        //public ProjectTreeItem(ReferenceObject referenceObject, bool IsForAdd)
-        //{
-        //    this.ReferenceObject = referenceObject;
-        //    this.IsForAdd = IsForAdd;
-        //}
+        }
+        public ProjectTreeItem(ReferenceObject referenceObject, bool IsForAdd)
+        {
+            this.ReferenceObject = referenceObject;
+            this.IsForAdd = IsForAdd;
+        }
 
         public bool IsForAdd { get; set; }
 
@@ -39,15 +42,21 @@ namespace WpfApp_DialogueAddSignatories.Model
                 if (_Children == null)
                 {
                     ObservableCollection<ITreeNode> temp = new ObservableCollection<ITreeNode>();
-                    foreach (var item in this.ReferenceObject.Children)
+                    foreach (var child in this.ReferenceObject.Children)
                     {
-                        ITreeNode node = Factory.CreateProjectTreeItem(item);
+                        ITreeNode node = Factory.CreateProjectTreeItem(child);
                         if (node != null) temp.Add(node);
                     }
                     _Children = temp;
                 }
                 return _Children;
             }
+            set
+            {
+               
+            }
         }
+
+
     }
 }

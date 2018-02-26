@@ -158,17 +158,17 @@ namespace WpfApp_DialogueAddSignatories.Model
             return work;
         }
 
-        string _Status;
+        string _status = null;
         public string Status
         {
             get
             {
-                if (_Status == null)
+                #region get status
+                if (_status == null)
                 {
-                    string result = "";
                     TFlexDOCsPM.ProjectElement current;
                     if (ReferenceObject is TFlex.DOCs.References.ProjectManagement.ProjectElement) current = ReferenceObject as TFlexDOCsPM.ProjectElement;
-                    else return "";
+                    else return _status;
 
                     double Percent = current[PM_param_Percent_GUID].GetDouble();
 
@@ -179,50 +179,51 @@ namespace WpfApp_DialogueAddSignatories.Model
                     DateTime FactEndDate = current[PM_param_FactEndDate_GUID].GetDateTime();
                     bool FactEndDateIsEmpty = current[PM_param_FactEndDate_GUID].IsEmpty;
 
-                    result = "Данные не корректны.";
+                    _status = "Данные не корректны.";
                     /*DateTime времяноль = new DateTime();*/
                     if (Percent == 1) return "Выполнено";
                     if (PlanStartDate.Date.CompareTo(DateTime.Now.Date) > 0 && FactStartDateIsEmpty && Percent == 0) //плановое начало позже сегодняшнего числа
                     {
-                        result = "Срок не наступил";
+                        _status = "Срок не наступил";
                     }
                     else //плановое начало (уже прошло) раньше сегодняшнего числа
                     {
-                        if (FactStartDateIsEmpty && Percent == 0) result = "Не начиналось";
+                        if (FactStartDateIsEmpty && Percent == 0) _status = "Не начиналось";
                         if (PlanEndDate.Date.CompareTo(DateTime.Now.Date) >= 0)//плановое окончание позже или сегодняшнего числа (ещё не наступило)
                         {
                             if ((!FactStartDateIsEmpty && FactEndDateIsEmpty) ||
                                 (Percent > 0 && Percent < 1)) // 0 < % < 1
-                                result = "В работе";
+                                _status = "В работе";
 
                         }
                         else //плановое окончание раньше сегодняшнего числа (уже прошло)
                         {
                             if (/*!current[factStart].IsEmpty && */FactEndDateIsEmpty && //есть факт. старт и нет факт. окончания
                                 Percent != 1) //процент выполнения не 100%
-                                result = "Не выполнена";
+                                _status = "Не выполнена";
 
                         }
                     }
 
-                    return result;
+                    return _status;
                 }
-                return _Status;
+                #endregion
+                return _status;
             }
         }
 
-        string _Name;
+        string _name;
         public string Name
         {
             get
             {
-                if (_Name == null)
+                if (_name == null)
                 {
                     if (ReferenceObject != null)
-                        _Name = ReferenceObject[PM_param_Name_GUID].GetString();
-                    else _Name = "";
+                        _name = ReferenceObject[PM_param_Name_GUID].GetString();
+                    else _name = "";
                 }
-                return _Name;
+                return _name;
             }
         }
 
@@ -292,16 +293,32 @@ namespace WpfApp_DialogueAddSignatories.Model
             {
                 if (_PlannedNonConsumableResources == null)
                 {
-                    List<ReferenceObject> resources = this.ReferenceObject.GetObjects(ProjectManagementWork.PM_link_UsedResources_GUID).Where(res => (res.Class == References.Class_NonConsumableResources)).ToList();
+
                     _PlannedNonConsumableResources = new List<UsedResource>();
-                    foreach (var item in resources)
-                    {
-                        UsedResource usedResource = new UsedResource(item);
-                        if (usedResource.IsPlanned) _PlannedNonConsumableResources.Add(usedResource);
-                    }
+                    _PlannedNonConsumableResources.AddRange(GetLinkedUsedNonConsumableResources(this.ReferenceObject, true));
                 }
                 return _PlannedNonConsumableResources;
             }
+        }
+
+        /// <summary>
+        /// Получить  нерасходуемые ресурсы 
+        /// </summary>
+        /// <param name="ro"></param>
+        /// <returns></returns>
+        static public IEnumerable<UsedResource> GetLinkedUsedNonConsumableResources(ReferenceObject ro, bool IsOnlyPlanned)
+        {
+
+            List<ReferenceObject> resources = ro.GetObjects(ProjectManagementWork.PM_link_UsedResources_GUID).Where(res => (res.Class == References.Class_NonConsumableResources)).ToList();
+            List<UsedResource> PlannedNonConsumableResources = new List<UsedResource>();
+            foreach (var item in resources)
+            {
+                UsedResource usedResource = new UsedResource(item);
+                if (usedResource.IsPlanned && IsOnlyPlanned) PlannedNonConsumableResources.Add(usedResource);
+            }
+
+            return PlannedNonConsumableResources;
+
         }
 
         double? _LabourCost;
@@ -562,6 +579,11 @@ namespace WpfApp_DialogueAddSignatories.Model
             return this.Name;
         }
 
+        /// <summary>
+        /// Список всех проектов детализаций
+        /// </summary>
+        /// <param name="ЗависимостиДетализации"></param>
+        /// <returns></returns>
         static public ObservableCollection<ProjectManagementWork> AllDetailingProjects(List<ReferenceObject> ЗависимостиДетализации)
         {
             ObservableCollection<ProjectManagementWork> detailingProjects = new ObservableCollection<ProjectManagementWork>();
@@ -569,7 +591,6 @@ namespace WpfApp_DialogueAddSignatories.Model
             var PMref = WpfApp_DialogueAddSignatories.Model.References.ProjectManagementReference;
             foreach (var зависимость in ЗависимостиДетализации)
             {
-
                 guidЗависимости = зависимость[Synchronization.SynchronizationParameterGuids.param_SlaveProject_Guid].GetGuid();
 
                 //var pe = PMref.Find(guidЗависимости);
@@ -618,7 +639,7 @@ namespace WpfApp_DialogueAddSignatories.Model
             BeginChanges();
             this.ReferenceObject[PM_param_Name_GUID].Value = name;
             this.ReferenceObject.EndChanges(); //если нет изменений то возвращает false
-            this._Name = name;
+            this._name = name;
         }
 
 
@@ -694,11 +715,205 @@ namespace WpfApp_DialogueAddSignatories.Model
 
         internal void AddResource(UsedResource newUsedResource)
         {
-            this.BeginChanges();
-            newUsedResource.ReferenceObject.Reload();
-            this.ReferenceObject.AddLinkedObject(ProjectManagementWork.PM_link_UsedResources_GUID, newUsedResource.ReferenceObject);
-            this.ReferenceObject.EndChanges();
+            AddResource(this.ReferenceObject, newUsedResource);
             _PlannedNonConsumableResources = null;
+        }
+
+        static public void AddResource(ReferenceObject projectElement, UsedResource newUsedResource)
+        {
+            AddResource(projectElement, newUsedResource.ReferenceObject);
+        }
+
+        static public void AddResource(ReferenceObject projectElement, ReferenceObject newUsedResource)
+        {
+            projectElement.BeginChanges();
+            newUsedResource.Reload();
+            projectElement.AddLinkedObject(ProjectManagementWork.PM_link_UsedResources_GUID, newUsedResource);
+            projectElement.EndChanges();
+        }
+
+        /// <summary>
+        /// Метод копирования используемых ресурсов
+        /// </summary>
+        /// <param name="owner">Элемент проекта в который копируем используемые ресурсы</param>
+        /// <param name="whence">Элемент проекта с которого копируем используемые ресурс</param>
+        /// <param name="PlanningSpaceForNewRes_Guid">Пространство планирования для новых ресурсов</param>
+        /// <param name="PlanningSpaceForCheck_Guid">Копировать ресурсы только из этого пространства планирования</param>
+        /// <returns></returns>
+        public static bool СкопироватьИспользуемыеРесурсы_изЭлементаПроекта_вЭлементПроекта(ReferenceObject owner, ReferenceObject whence
+              , Guid? PlanningSpaceForNewRes_Guid = null, Guid? PlanningSpaceForCheck_Guid = null, bool onlyPlanningRes = false)
+        {
+
+            if (owner == null || whence == null) return false;
+
+            //получение списка используемых ресурсов с детализации
+            var usedResources = ProjectManagementWork.GetLinkedUsedNonConsumableResources(whence, onlyPlanningRes)
+                .Where(UseRes =>
+                {
+
+
+                    var currentGuidPlanningSpaceRes = UsedResource.GetPlanningSpaceUsedResource(UseRes.ReferenceObject);
+
+                    if (PlanningSpaceForCheck_Guid != null && PlanningSpaceForCheck_Guid != currentGuidPlanningSpaceRes)
+                    {
+                        return false;
+
+                    }
+                    ReferenceObject NonExpendableResource = null;
+
+                    //Получаем Ресурс из справочника Ресурсы
+                    NonExpendableResource = UsedResource.GetResourcesLink(UseRes.ReferenceObject);
+
+                    if (NonExpendableResource == null)
+                    {
+                        //MessageBox.Show("NonExpendableResource == null");
+                        return false;
+                    }
+
+                    //Проверка ресурса на тип
+                    switch (NonExpendableResource.Class.Name)
+                    {
+                        case "Оборудование и оснастка":
+                            { return false; }
+                        case "Оснащение":
+                            { return false; }
+                        case "Комплектующие":
+                            { return false; }
+                        case "Ресурсы материалов":
+                            { return false; }
+                    }
+
+                    return true;
+                }).ToList();
+
+            if (usedResources.Count() == 0)
+                return true;
+
+            var result = new List<ReferenceObject>(usedResources.Count);
+
+            //цикл копирования используемых ресурсов с детализации, в справочник используемыее ресурсы
+            foreach (var usedResource in usedResources)
+            {
+
+                //Здесь дописать копирование нужных параметров и связей
+                var newResourceUsed = usedResource.ReferenceObject.CreateCopy(usedResource.ReferenceObject.Class);
+
+                // var newResourceUsed = ResourceUsed.CreateReferenceObject(null, ResourceUsed.Classes.Find(Dinamika.Guids.ResourceUsedReference.TypeNonExpendableResourcesUsedReferenceObject_Guid));
+                /*
+                //Получаем Ресурс из справочника Ресурсы
+                var NonExpendableResource = usedResource.GetObject(Guids.ResourceUsedReference.Links.ResourcesLink_Guid);
+
+                newResourceUsed[Guids.ResourceUsedReference.Name_Guid].Value = usedResource[Guids.ResourceUsedReference.Name_Guid].Value;
+
+                if (NonExpendableResource != null)
+                    newResourceUsed.SetLinkedObject(Guids.ResourceUsedReference.Links.ResourcesLink_Guid, NonExpendableResource);
+
+                newResourceUsed[Guids.ResourceUsedReference.Number_Guid].Value = usedResource[Guids.ResourceUsedReference.Number_Guid].Value;
+
+
+                newResourceUsed[Guids.ResourceUsedReference.BeginDate_Guid].Value = usedResource[Guids.ResourceUsedReference.BeginDate_Guid].Value;
+                newResourceUsed[Guids.ResourceUsedReference.EndDate_Guid].Value = usedResource[Guids.ResourceUsedReference.EndDate_Guid].Value;
+
+                newResourceUsed[Guids.ResourceUsedReference.FactValue_Guid].Value = usedResource[Guids.ResourceUsedReference.FactValue_Guid].Value;
+                newResourceUsed[Guids.ResourceUsedReference.FixNumber_Guid].Value = usedResource[Guids.ResourceUsedReference.FixNumber_Guid].Value;
+                */
+
+                if (PlanningSpaceForNewRes_Guid != null && PlanningSpaceForNewRes_Guid != Guid.Empty)
+                    if (!newResourceUsed.Changing)
+                        newResourceUsed.BeginChanges();
+                {
+                    newResourceUsed[UsedResource.param_PlanningSpace_Guid].Value = PlanningSpaceForNewRes_Guid;
+                }
+                //else
+                //newResourceUsed[Guids.ResourceUsedReference.PlanningSpace_Guid].Value = Project(owner)[Dinamika.Guids.ProjectManagementReference.TypeProjectElement.PlanningSpace_Guid].Value;
+                /*
+                                //в библиотеке TF - isActual
+                                newResourceUsed[Guids.ResourceUsedReference.FactValue_Guid].Value = usedResource[Guids.ResourceUsedReference.FactValue_Guid].Value;
+
+                                //ResourceGroupLin
+                                newResourceUsed.SetLinkedObject(Guids.ResourceUsedReference.Links.ResourceGroup_Nto1_Guid, usedResource.GetResourceGroupLink());
+
+                                newResourceUsed[Guids.ResourceUsedReference.Workload_Guid].Value = usedResource[Guids.ResourceUsedReference.Workload_Guid].Value;
+                                */
+                newResourceUsed.EndChanges();
+
+
+                //WaitingHelper.SetText(string.Format("Добавление ресурса {0} в элемент проекта {1}", newResourceUsed.ToString(), owner.ToString()));
+
+                // newResourceUsed.Reload();
+
+                result.Add(newResourceUsed);
+            }
+
+
+            //подключаем используемые ресурсы к элемент укрумения
+            if (CanEditObject(owner) == false) return false;
+
+            owner.BeginChanges();
+
+            foreach (var newResource in result)
+            {
+                // if (newResource.Changing)
+                //     newResource.EndChanges();
+                ProjectManagementWork.AddResource(owner, newResource);
+                //owner.AddLinkedObject(Guids.ProjectManagementReference.TypeProjectElement.Links.ProjectElementResLinks_1toN_Guid, newResource);
+            }
+
+            owner.EndChanges();
+
+            owner.Unlock();
+
+            //пересчитываем суммарные трудозатраты
+            RecalcResourcesWorkLoad(owner);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Пересчить Суммарные значения ресурсов
+        /// </summary>
+        /// <param name="pe"></param>
+        /// <param name="flag"></param>
+        /// <param name="flag2"></param>
+        static void RecalcResourcesWorkLoad(ReferenceObject pe, bool flag = false, bool flag2 = true)
+        {
+            var PE = pe as TFlex.DOCs.References.ProjectManagement.ProjectElement;
+
+            if (PE == null) return;
+            PE.RecalcResourcesWorkLoad(flag, flag2);
+        }
+
+        /// <summary>
+        /// Возможность редактирования объекта, если можно true, иначе   false
+        /// </summary>
+        static bool CanEditObject(ReferenceObject projectElement)
+        {
+            if (projectElement == null) return false;
+
+            projectElement.Unlock();
+            if (projectElement.CanEdit)
+            {
+                try
+                {
+                    projectElement.BeginChanges();
+                    projectElement.EndChanges();
+
+                }
+                catch (ObjectLockErrorException)
+                {
+                    return false;
+                }
+                finally
+                {
+                    projectElement.Unlock();
+                }
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public enum AccessCode
@@ -731,7 +946,7 @@ namespace WpfApp_DialogueAddSignatories.Model
         static Guid PM_list_Access_GUID = new Guid("68989495-719e-4bf3-ba7c-d244194890d5");       //Guid списка "Доступы", справочника - "Управление проектами"
         static Guid PM_param_Name_GUID = new Guid("b7e3b3fe-65c0-4f1f-82e5-3ee95fe360dd");//Guid параметра "Наименование" справочника - "Управление проектами"
         static Guid PM_param_Cipher_GUID = new Guid("b4f4b4d3-5ffc-4869-a880-7561e0c2a574");//Guid параметра "Обозначение" справочника - "Управление проектами"
-        static Guid PM_param_PlanningSpace_GUID = new Guid("fd123c69-7945-487a-a854-884ef68f1036");//Guid параметра "Пространство планирования" справочника - "Управление проектами"
+        static public Guid PM_param_PlanningSpace_GUID = new Guid("fd123c69-7945-487a-a854-884ef68f1036");//Guid параметра "Пространство планирования" справочника - "Управление проектами"
         static Guid PM_param_PlanStartDate_GUID = new Guid("4fd8d58a-04ba-4e80-a240-12691e460b83");//Guid параметра "Начало"
         static Guid PM_param_PlanEndDate_GUID = new Guid("da997729-07e2-40aa-a1a0-c08bc4dde481");//Guid параметра "Окончание"
         static Guid PM_param_FactStartDate_GUID = new Guid("2f457df1-246d-4d23-a332-53f387940ba9");      //Guid параметра "Фактическое начало", справочника - "Управление проектами"
@@ -744,7 +959,12 @@ namespace WpfApp_DialogueAddSignatories.Model
         static Guid PM_param_WorkIntervalLengthDays_Guid = new Guid("488646b9-a912-468f-a791-e9e68774215f");      //Guid параметра "Длительность(Дни)", справочника - "Управление проектами"
         static Guid PM_param_WorkIntervalLengthHours_Guid = new Guid("9f733670-5f3b-4554-b023-e4d450ab0c00");      //Guid параметра "Длительность", справочника - "Управление проектами"
 
-        public static readonly Guid PM_link_UsedResources_GUID = new Guid("1a22ee46-5438-4caa-8b75-8a8a37b74b7e");//Guid списка 1:n "Ресурс"
+        /// <summary>
+        ///  Ресурс 
+        /// Связь c спр. "Используемые ресурсы" (двусторонняя)
+        /// 1 к N
+        /// </summary>
+        public static readonly Guid PM_link_UsedResources_GUID = new Guid("1a22ee46-5438-4caa-8b75-8a8a37b74b7e");
         static Guid PM_link_Responsible_GUID = new Guid("063df6fa-3889-4300-8c7a-3ce8408a931a");//Guid связи N:1 "Ответственный"
 
     }
