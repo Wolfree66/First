@@ -54,5 +54,19 @@ namespace SpendingTableDialog
         {
             return true;
         }
+
+        //private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        //{
+        //    ComboBox cb = sender as ComboBox;
+        //    if (cb != null && cb.SelectedValue != null)
+        //    {
+        //        MessageBox.Show(cb.SelectedValue.ToString());
+        //        foreach (var item in viewModel.Items)
+        //        {
+        //            Console.WriteLine(e.Source.GetType().ToString());
+        //            Console.WriteLine(item.Item + "\t" + item.DoubleValue + "\t" + item.StringValue);
+        //        }
+        //    }
+        //}
     }
 }

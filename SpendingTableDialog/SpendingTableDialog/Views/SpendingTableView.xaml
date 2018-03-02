@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SpendingTableDialog"
         mc:Ignorable="d"
-        Title="Таблица расходов" Height="300" Width="500"
-        MinHeight="300"
-        MinWidth="300" WindowStartupLocation="CenterOwner"
+        Title="Таблица расходов" Height="250" Width="500"
+        MinHeight="250"
+        MinWidth="300" WindowStartupLocation="CenterScreen"
         >
     <Grid>
         <Grid.RowDefinitions>
@@ -24,8 +24,8 @@
         <DataGrid x:Name="dataGrid" AutoGenerateColumns="False" ItemsSource="{Binding Items}" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Top" HorizontalAlignment="Stretch" CanUserAddRows="False" CanUserDeleteRows="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding ExpenseName}" Header="Вид расходов"/>
-                <DataGridTextColumn Binding="{Binding DoubleValue}" Header="Количество"/>
-                <DataGridComboBoxColumn Header="Способ выдачи денежных средств">
+                <DataGridTextColumn Binding="{Binding DoubleValue}" Header="Сумма"/>
+                <!--<DataGridComboBoxColumn Header="Способ выдачи денежных средств">
                     <DataGridComboBoxColumn.EditingElementStyle>
                         <Style TargetType="ComboBox">
                             <Setter Property="ItemsSource" Value="{Binding Path=StringValues}"/>
@@ -37,13 +37,28 @@
                         <Style TargetType="ComboBox">
                             <Setter Property="SelectedValue" Value="{Binding Path=StringValue}"/>
                             <Setter Property="ItemsSource" Value="{Binding Path=StringValues}"/>
-                        </Style>
+                                                    </Style>
                     </DataGridComboBoxColumn.ElementStyle>
-                </DataGridComboBoxColumn>
+                </DataGridComboBoxColumn>-->
+                <DataGridTemplateColumn Header="Способ выдачи денежных средств">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox                              
+                                ItemsSource="{Binding Path=StringValues}"
+                                SelectedValue="{Binding Path=StringValue, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <!--<DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox ItemsSource="{Binding .StringValue}" 
+          SelectedValue="{Binding Path=.StringValue}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>-->
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
         <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal">
-            <Button x:Name="buttonOK" Content="OK" Command="{Binding Path=OKButtonCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" HorizontalAlignment="Left" Margin="20" VerticalAlignment="Top" Width="75" IsDefault="True"/>
+            <Button x:Name="buttonOK" Content="OK" Command="{Binding Path=OKButtonCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" HorizontalAlignment="Left" Margin="50,20,20,20" VerticalAlignment="Top" Width="75" IsDefault="True"/>
             <Button x:Name="buttonCancel" Content="Cancel" HorizontalAlignment="Left" Margin="20" VerticalAlignment="Top" Width="75" IsCancel="True"/>
         </StackPanel>
 
