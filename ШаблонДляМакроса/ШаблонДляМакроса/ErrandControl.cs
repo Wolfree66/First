@@ -156,9 +156,9 @@ namespace ErrandControl
             //ищем в логе последнюю запись о реквизитах поручения
             //GetLastParametersFromLog(req, out errandText, out errandDocumentForErrand, out errandPlanEndDate,
             //out errandProposedResult, out errandDirector, out errandPerformer, out errandChecker);
-            //ReferenceObject errand_ro = ErrandControlReference.Reference.Find(2249);
-            //Errand newErrand = new Errand(errand_ro);
-            //CancelCorrection(newErrand);
+            ReferenceObject errand_ro = ErrandControlReference.Reference.Find(2480);
+            Errand newErrand = new Errand(errand_ro);
+            CancelCorrection(newErrand);
         }
 #endif
 
@@ -325,7 +325,7 @@ namespace ErrandControl
                 }
                 else
                 {
-                    if (errand.Checker == null || errand.Checker.FullName.ToString().Trim(' ') != checkerName) errand.Checker = UserReference.FindUser(checkerName);
+                    if (errand.Performer == null || errand.Performer.FullName.ToString().Trim(' ') != performerName) errand.Performer = UserReference.FindUser(performerName);
                 }
 
                 errand.SaveRequisitesToDB();
@@ -964,26 +964,6 @@ namespace ErrandControl
 #if !server
         string GetNewCommentFromUser(string comment)
         {
-            //UIMacroContext uIMacroContext = new UIMacroContext(new MacroContext(ErrandControlReference.Connection), null, null, null, null);
-            var dialog = this.CreateInputDialog();
-            dialog.Caption = "Введите комментарий:";
-            dialog.AddString("Комментарий", comment, true, false, false, 5);
-
-            if (dialog.Show())
-            {
-                comment = dialog.GetValue("Комментарий");
-            }
-            else { throw new Errand.Exception_CancelAllActivities("Ввод комментария отменён."); }
-            return comment;
-        }
-
-        /// <summary>
-        /// Не работает в новом клиенте
-        /// </summary>
-        /// <param name="comment"></param>
-        /// <returns></returns>
-        string GetNewCommentFromUserOld(string comment)
-        {
             UIMacroContext uIMacroContext = new UIMacroContext(new MacroContext(ErrandControlReference.Connection), null, null, null, null);
             var dialog = uIMacroContext.CreateInputDialog();
             dialog.Caption = "Введите комментарий:";
@@ -1043,7 +1023,7 @@ namespace ErrandControl
                 term3_3.Value = СавченковаМария;
 
 
-                filter.Terms.GroupTerms(new Term[] { term3_1, term3_2, term3_3});
+                filter.Terms.GroupTerms(new Term[] { term3_1, term3_2, term3_3 });
 
                 //Применяем фильтр
                 findedObjects = ErrandControlReference.Reference.Find(filter);
@@ -1690,8 +1670,9 @@ namespace ErrandControl
                         <!--End Email Wrapper Table-->
                         <table  cellpadding = ""0"" cellspacing = ""0"" border = ""1"" width = ""99 % "">
                      
-                                  <tr>
-                                     <th nowrap bgcolor =#e1e1e1> № </th>
+             <tr>
+                <th nowrap bgcolor =#e1e1e1> № </th>
+                <th nowrap bgcolor =#e1e1e1> Коэф. важности </th>
 				<th nowrap bgcolor =#e1e1e1> Текст поручения </th>
 				<th nowrap bgcolor =#e1e1e1> Срок выполнения </th>
 				<th nowrap bgcolor =#e1e1e1> Исполнитель </th>
@@ -1756,26 +1737,28 @@ namespace ErrandControl
                 strBld.Append(String.Format(@"
 <tr>
 <td>{10}</td>
-<td style=align=""right""><a href={0}>{1}</a></td>
+<td align=""center"">{12}</td>
+<td><a href={0}>{1}</a></td>
 <td>{11}</td>
-<td style=align=""left"">{2}</td>
+<td>{2}</td>
 <td>{8}</td>
 <td>{9}</td>
 <td>{3}</td>
 <td bgcolor=""{4}"">{5}</td>
 <td bgcolor=""{6}"">{7}</td></tr>",
-                                            link,
-                                            errand.Text + "&nbsp",
-                                            performer + "&nbsp",
-                                            errand.ProposedResult + "&nbsp",
-                                            bgColorContr,
-                                            commentControl + "&nbsp",
-                                            bgColorPerf,
-                                            commentPerform + "&nbsp",
-                                            errand.Checker.ToString() + "&nbsp",
-                                            errand.Director.ToString() + "&nbsp",
-                                            errand.ErrandNumber.ToString(),
-                                            errand.PlanEndDate.ToString("dd.MM.yyyy")));
+                                            link,//0
+                                            errand.Text + "&nbsp",//1
+                                            performer + "&nbsp",//2
+                                            errand.ProposedResult + "&nbsp",//3
+                                            bgColorContr,//4
+                                            commentControl + "&nbsp",//5
+                                            bgColorPerf,//6
+                                            commentPerform + "&nbsp",//7
+                                            errand.Checker.ToString() + "&nbsp",//8
+                                            errand.Director.ToString() + "&nbsp",//9
+                                            errand.ErrandNumber.ToString(),//10
+                                            errand.PlanEndDate.ToString("dd.MM.yyyy"),//11
+                                            errand.CoefficientOfImportance.ToString()));
             }
             strBld.Append(@"</table>");
 
@@ -2710,20 +2693,21 @@ namespace ErrandControl
             {
                 ReferenceObject refO;
                 if (!ReferenceObject.TryBeginChanges(out refO)) throw new Exception_CancelAllActivities("Объект заблокирован другим пользователем.");
+                //this.ReferenceObject = refO;
             }
-            ReferenceObject[EC_param_ErrandText_GUID].Value = Text;
-            ReferenceObject[EC_param_ErrandPlanEndDate_GUID].Value = PlanEndDate;
-            ReferenceObject[EC_param_DocumentNumberWithErrand_GUID].Value = DocumentForErrand;
-            ReferenceObject[EC_param_ProposedResult_GUID].Value = ProposedResult;
-            ReferenceObject[EC_param_ExtPerformer_GUID].Value = ExternalPerformer;
-            ReferenceObject[EC_param_ExtErrand_GUID].Value = IsPerformerExternal;
-            ReferenceObject[EC_param_ExternalPerformerEmail_GUID].Value = ExternalPerformerEMail;
-            ReferenceObject[EC_param_CoefficientOfImportance_GUID].Value = CoefficientOfImportance;
+            this.ReferenceObject[EC_param_ErrandText_GUID].Value = Text;
+            this.ReferenceObject[EC_param_ErrandPlanEndDate_GUID].Value = PlanEndDate;
+            this.ReferenceObject[EC_param_DocumentNumberWithErrand_GUID].Value = DocumentForErrand;
+            this.ReferenceObject[EC_param_ProposedResult_GUID].Value = ProposedResult;
+            this.ReferenceObject[EC_param_ExtPerformer_GUID].Value = ExternalPerformer;
+            this.ReferenceObject[EC_param_ExtErrand_GUID].Value = IsPerformerExternal;
+            this.ReferenceObject[EC_param_ExternalPerformerEmail_GUID].Value = ExternalPerformerEMail;
+            this.ReferenceObject[EC_param_CoefficientOfImportance_GUID].Value = CoefficientOfImportance;
             this.ReferenceObject.SetLinkedObject(Errand.EC_link_Director_GUID, this.Director);
             this.ReferenceObject.SetLinkedObject(Errand.EC_link_Performer_GUID, this.Performer);
             this.ReferenceObject.SetLinkedObject(Errand.EC_link_Checker_GUID, this.Checker);
 
-            ReferenceObject.EndChanges();
+            bool isSaved = this.ReferenceObject.EndChanges();
             beginChangesApplied = false;
             haveChangesToSave = false;
         }
@@ -2799,7 +2783,7 @@ namespace ErrandControl
         {
             get
             {
-                if (_ExternalPerformer == null && this.IsPerformerExternal)
+                if (_ExternalPerformer == null)
                 {
                     _ExternalPerformer = ReferenceObject[EC_param_ExtPerformer_GUID].GetString();
                 }
@@ -2817,7 +2801,7 @@ namespace ErrandControl
         {
             get
             {
-                if (_ExternalPerformerEMail == null && this.IsPerformerExternal)
+                if (_ExternalPerformerEMail == null)
                 {
                     _ExternalPerformerEMail = ReferenceObject[EC_param_ExternalPerformerEmail_GUID].GetString();
                 }
@@ -3158,18 +3142,18 @@ namespace ErrandControl
             {
                 if (value == _Text) return;
                 _Text = value;
-                if (ReferenceObject == null)
-                {; }
-                else
-                {
-                    if (!beginChangesApplied)
-                    {
-                        ReferenceObject.BeginChanges();
-                        beginChangesApplied = true;
-                    }
-                    ReferenceObject[EC_param_ErrandText_GUID].Value = _Text;
-                    haveChangesToSave = true;
-                }
+                //if (ReferenceObject == null)
+                //{; }
+                //else
+                //{
+                //    if (!beginChangesApplied)
+                //    {
+                //        ReferenceObject.BeginChanges();
+                //        beginChangesApplied = true;
+                //    }
+                //    ReferenceObject[EC_param_ErrandText_GUID].Value = _Text;
+                //    haveChangesToSave = true;
+                //}
             }
         }
 
@@ -3215,18 +3199,18 @@ namespace ErrandControl
             {
                 if (value == _DocumentForErrand) return;
                 _DocumentForErrand = value;
-                if (ReferenceObject == null)
-                {; }
-                else
-                {
-                    if (!beginChangesApplied)
-                    {
-                        ReferenceObject.BeginChanges();
-                        beginChangesApplied = true;
-                    }
-                    ReferenceObject[EC_param_DocumentNumberWithErrand_GUID].Value = _DocumentForErrand;
-                    haveChangesToSave = true;
-                }
+                //if (ReferenceObject == null)
+                //{; }
+                //else
+                //{
+                //    if (!beginChangesApplied)
+                //    {
+                //        ReferenceObject.BeginChanges();
+                //        beginChangesApplied = true;
+                //    }
+                //    ReferenceObject[EC_param_DocumentNumberWithErrand_GUID].Value = _DocumentForErrand;
+                //    haveChangesToSave = true;
+                //}
             }
         }
 
@@ -3242,18 +3226,18 @@ namespace ErrandControl
             {
                 if (value == _ProposedResult) return;
                 _ProposedResult = value;
-                if (ReferenceObject == null)
-                {; }
-                else
-                {
-                    if (!beginChangesApplied)
-                    {
-                        ReferenceObject.BeginChanges();
-                        beginChangesApplied = true;
-                    }
-                    ReferenceObject[EC_param_ProposedResult_GUID].Value = _ProposedResult;
-                    haveChangesToSave = true;
-                }
+                //if (ReferenceObject == null)
+                //{; }
+                //else
+                //{
+                //    if (!beginChangesApplied)
+                //    {
+                //        ReferenceObject.BeginChanges();
+                //        beginChangesApplied = true;
+                //    }
+                //    ReferenceObject[EC_param_ProposedResult_GUID].Value = _ProposedResult;
+                //    haveChangesToSave = true;
+                //}
             }
         }
 
